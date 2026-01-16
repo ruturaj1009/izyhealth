@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import Link from 'next/link';
 import styles from './page.module.css';
 
@@ -61,7 +62,10 @@ export default function TestsPage() {
     };
 
     const handleSubmit = async () => {
-        if (!formName.trim()) return;
+        if (!formName.trim()) {
+            toast.error('Department name is required');
+            return;
+        }
         setSubmitting(true);
         
         try {
@@ -81,37 +85,87 @@ export default function TestsPage() {
             if (data.success) {
                 if (isEditing) {
                     setDepartments(departments.map(d => d._id === currentId ? data.data : d));
+                    toast.success('Department updated successfully');
                 } else {
                     setDepartments([data.data, ...departments]);
+                    toast.success('Department created successfully');
                 }
                 setShowModal(false);
             } else {
-                alert(data.error);
+                toast.error(data.error || 'Failed to save department');
             }
         } catch (error) {
             console.error('Failed to save department', error);
+            toast.error('An error occurred while saving');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (id: string, e: React.MouseEvent) => {
+    const handleDelete = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
-        if (!confirm('Are you sure you want to delete this department?')) return;
-
-        try {
-            const res = await fetch(`/api/v1/departments/${id}`, {
-                method: 'DELETE',
-            });
-            const data = await res.json();
-            if (data.success) {
-                setDepartments(departments.filter(d => d._id !== id));
-            } else {
-                alert(data.error);
-            }
-        } catch (error) {
-            console.error('Failed to delete department', error);
-        }
+        
+        toast((t) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontWeight: 600 }}>Are you sure you want to delete this department?</div>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{
+                            padding: '6px 12px',
+                            background: '#f1f5f9',
+                            color: '#64748b',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 500
+                        }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                const res = await fetch(`/api/v1/departments/${id}`, {
+                                    method: 'DELETE',
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                    setDepartments(prev => prev.filter(d => d._id !== id));
+                                    toast.success('Department deleted successfully');
+                                } else {
+                                    toast.error(data.error || 'Failed to delete');
+                                }
+                            } catch (error) {
+                                console.error('Failed to delete department', error);
+                                toast.error('An error occurred while deleting');
+                            }
+                        }}
+                        style={{
+                            padding: '6px 12px',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 500
+                        }}
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        ), {
+            duration: 5000,
+            style: {
+                border: '1px solid #e2e8f0',
+                padding: '16px',
+                color: '#1e293b',
+            },
+        });
     };
 
     const filteredDepts = departments.filter(d => 
@@ -159,7 +213,7 @@ export default function TestsPage() {
                 ) : (
                     <div className={styles.list}>
                         {filteredDepts.map((d) => (
-                            <Link href="#" key={d._id}>
+                            <Link href={`/tests/${d._id}`} key={d._id}>
                                 <div className={styles.listItem} style={{ alignItems: 'center', gap: '15px' }}>
                                     <div style={{ 
                                         fontSize: '24px', 

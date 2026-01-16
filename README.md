@@ -9,6 +9,10 @@ A modern, full-stack healthcare management application built with **Next.js 16**
 -   **User Management**:
     -   **Patients**: Full CRUD operations with search, pagination, and optimized creating flow (Toast notifications, optional fields).
     -   **Doctors**: Dedicated portal for doctor management with advanced filtering and pagination.
+-   **Test Management**:
+    -   **Department-Centric Workflow**: Organize and browse tests by department.
+    -   **Flexible Test Types**: Support for Normal (ranges), Descriptive (rich text), and Group tests.
+    -   **Rich Text Editor**: Integrated Tiptap editor for creating comprehensive descriptive test templates with tables and formatting.
 -   **Role-Based Access**: Specialized views and logic for `PATIENT`, `DOCTOR`, and `ADMIN` roles using Mongoose discriminators.
 -   **Modern UI/UX**:
     -   Responsive Flexbox layouts.
@@ -19,6 +23,7 @@ A modern, full-stack healthcare management application built with **Next.js 16**
 ## 🛠 Tech Stack
 
 -   **Frontend**: Next.js 16 (App Router), React 19, CSS Modules (Flexbox/Grid).
+-   **Editor**: Tiptap (Headless wrapper for ProseMirror) for rich text editing.
 -   **Backend**: Next.js API Routes (Serverless).
 -   **Database**: MongoDB with Mongoose (Schemas, Discriminators).
 -   **Validation**: Zod for type-safe API validation.
