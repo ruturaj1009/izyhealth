@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect, use, Suspense } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import RichTextEditor from '../../../components/RichTextEditor';
+import RichTextEditor from '../../../../components/RichTextEditor';
 
 interface Department {
     _id: string;
@@ -12,19 +12,17 @@ interface Department {
 
 const TEST_TAGS = ['Blood Test', 'Urine Test', 'Radiology', 'Pathology', 'Microbiology', 'Biochemistry'];
 
-function CreateTestContent({ params }: { params: Promise<{ departmentId: string }> }) {
-    const { departmentId } = use(params);
+export default function EditTestPage({ params }: { params: Promise<{ departmentId: string, testId: string }> }) {
+    const { departmentId, testId } = use(params);
     const router = useRouter();
-    
-    const searchParams = useSearchParams();
-    const groupId = searchParams.get('groupId') || null;
     
     // We might want to fetch department name for breadcrumbs?
     const [departmentName, setDepartmentName] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     // Form State
-    const [testType, setTestType] = useState('normal');    
+    const [testType, setTestType] = useState('normal');
     const [name, setName] = useState('');
     const [shortCode, setShortCode] = useState('');
     const [tag, setTag] = useState(TEST_TAGS[0]);
@@ -50,19 +48,57 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
 
     useEffect(() => {
         // Optional: Fetch department name for display
-        fetchDepartmentName();
-    }, [departmentId]);
+        fetchInitialData();
+    }, [departmentId, testId]);
 
-    const fetchDepartmentName = async () => {
+    const fetchInitialData = async () => {
         try {
-            const res = await fetch('/api/v1/departments');
-            const data = await res.json();
-            if(data.success) {
-                const d = data.data.find((dept: any) => dept._id === departmentId);
+            const [deptRes, testRes] = await Promise.all([
+                fetch('/api/v1/departments'),
+                fetch(`/api/v1/tests/${testId}`)
+            ]);
+
+            const deptData = await deptRes.json();
+            if(deptData.success) {
+                const d = deptData.data.find((dept: any) => dept._id === departmentId);
                 if(d) setDepartmentName(d.name);
             }
+
+            const testData = await testRes.json();
+            if (testData.success) {
+                const t = testData.data;
+                setName(t.name);
+                setTestType(t.type); // Warning: Changing type might be tricky if data structure differs, but let's allow it or disable it. Usually editing type is allowed but resets fields.
+                setShortCode(t.shortCode || '');
+                if(t.tags && t.tags.length > 0) setTag(t.tags[0]);
+                setPrice(t.price);
+                setRevenueShare(t.revenueShare);
+                
+                if (t.type === 'normal') {
+                    setUnit(t.unit || '');
+                    setMethod(t.method || '');
+                    if(t.method) setShowMethod(true);
+
+                    setFormula(t.formula || '');
+                    if(t.formula) setShowFormula(true);
+
+                    setInterpretation(t.interpretation || '');
+                    if(t.interpretation) setShowInterpretation(true);
+
+                    setReferenceRanges(t.referenceRanges || []);
+                } else if (t.type === 'descriptive') {
+                    setTemplate(t.template || '');
+                }
+            } else {
+                toast.error('Failed to load test data');
+                router.push(`/tests/${departmentId}`);
+            }
+
         } catch(e) {
             console.error(e);
+            toast.error('Error loading data');
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -94,36 +130,30 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                 price: Number(price),
                 revenueShare: Number(revenueShare),
                 department: departmentId, // Use the param
-                groupId // Add groupId to payload
             };
 
             if (testType === 'normal') {
                 payload.unit = unit;
-                payload.method = method;
-                payload.formula = formula;
-                payload.interpretation = interpretation;
+                payload.method = showMethod ? method : '';
+                payload.formula = showFormula ? formula : '';
+                payload.interpretation = showInterpretation ? interpretation : '';
                 payload.referenceRanges = referenceRanges;
             } else if (testType === 'descriptive') {
                 payload.template = template;
             } 
-            // Group type has no extra fields on creation anymore, subtests added in View page
-
-            const res = await fetch('/api/v1/tests', {
-                method: 'POST',
+            
+            const res = await fetch(`/api/v1/tests/${testId}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
 
             if (data.success) {
-                toast.success('Test created successfully!');
-                if (groupId) {
-                    router.push(`/tests/${departmentId}/${groupId}`);
-                } else {
-                    router.push(`/tests/${departmentId}/${data.data._id}`);
-                }
+                toast.success('Test updated successfully!');
+                router.push(`/tests/${departmentId}`);
             } else {
-                toast.error(data.error || 'Failed to create test');
+                toast.error(data.error || 'Failed to update test');
             }
         } catch (error) {
             console.error(error);
@@ -133,6 +163,8 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
         }
     };
 
+    if (loading) return <div style={{ padding: '30px' }}>Loading...</div>;
+
     return (
         <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'var(--font-geist-sans)' }}>
 
@@ -141,7 +173,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                 <span>&gt;</span>
                 <Link href={`/tests/${departmentId}`} style={{ color: 'inherit', textDecoration: 'none' }}>{departmentName || 'Department'}</Link>
                 <span>&gt;</span>
-                <span>Create</span>
+                <span>Edit</span>
             </div>
             
             {/* Header removed as requested */}
@@ -243,6 +275,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                             <input type="text" value={unit} onChange={e => setUnit(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         </div>
                     </div>
+
                     <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '15px' }}>Reference Range</h3>
                     <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '30px' }}>
                         {referenceRanges.map((range, idx) => (
@@ -390,7 +423,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
             
             {testType === 'group' && (
                  <div style={{ padding: '20px', background: '#e0f2fe', borderRadius: '8px', color: '#0369a1' }}>
-                     <p>You can add sub-tests to this group after creating it, in the "View Test" page.</p>
+                     <p>You can manage sub-tests in the "View Test" page.</p>
                  </div>
             )}
 
@@ -401,7 +434,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                     style={{
                         padding: '12px 24px',
                         background: '#f1f5f9',
-                        color: 'white',
+                        color: '#64748b',
                         border: 'none',
                         borderRadius: '8px',
                         fontSize: '16px',
@@ -427,19 +460,11 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                         boxShadow: '0 4px 6px -1px rgba(63, 81, 181, 0.2)'
                     }}
                 >
-                    {submitting ? 'Creating...' : 'Create Test'}
+                    {submitting ? 'Updating...' : 'Update Test'}
                 </button>
             </div>
             
 
         </div>
-    );
-}
-
-export default function CreateTestPage({ params }: { params: Promise<{ departmentId: string }> }) {
-    return (
-        <Suspense fallback={<div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>}>
-            <CreateTestContent params={params} />
-        </Suspense>
     );
 }
