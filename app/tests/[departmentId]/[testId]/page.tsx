@@ -38,12 +38,6 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
 
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
-    
-    // Subtest Management State
-    const [allTests, setAllTests] = useState<Test[]>([]); // For selection
-    const [isEditingSubtests, setIsEditingSubtests] = useState(false);
-    const [selectedSubtestIds, setSelectedSubtestIds] = useState<string[]>([]);
-    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         fetchTest();
@@ -55,9 +49,6 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
             const data = await res.json();
             if (data.success) {
                 setTest(data.data);
-                if (data.data.type === 'group') {
-                    setSelectedSubtestIds(data.data.subTests?.map((t: any) => t._id) || []);
-                }
             }
         } catch (error) {
             console.error(error);
@@ -67,69 +58,92 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
         }
     };
 
-    const fetchAllTests = async () => {
-        try {
-            // Need all tests to pick from
-            // We may want to filter out the current test to avoid circular dependency, 
-            // and maybe filter out other group tests if we don't want nested groups (optional)
-            const res = await fetch('/api/v1/tests'); 
-            const data = await res.json();
-            if(data.success) {
-                // Filter out self
-                setAllTests(data.data.filter((t: any) => t._id !== testId));
-            }
-        } catch(error) {
-            console.error(error);
-            toast.error('Failed to load available tests');
-        }
-    }
+    
 
-    const handleEditSubtests = () => {
-        setIsEditingSubtests(true);
-        fetchAllTests();
-    };
-
-    const toggleSubtestSelection = (id: string) => {
-        if(selectedSubtestIds.includes(id)) {
-            setSelectedSubtestIds(selectedSubtestIds.filter(sid => sid !== id));
+    const handleReorder = async (index: number, direction: 'up' | 'down') => {
+        if (!test?.subTests) return;
+        const newSubTests = [...test.subTests];
+        
+        if (direction === 'up') {
+            if (index === 0) return;
+            [newSubTests[index - 1], newSubTests[index]] = [newSubTests[index], newSubTests[index - 1]];
         } else {
-            setSelectedSubtestIds([...selectedSubtestIds, id]);
+            if (index === newSubTests.length - 1) return;
+            [newSubTests[index + 1], newSubTests[index]] = [newSubTests[index], newSubTests[index + 1]];
+        }
+
+        // Optimistic update
+        setTest({ ...test, subTests: newSubTests });
+
+        try {
+            await fetch(`/api/v1/tests/${testId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subTests: newSubTests.map(t => t._id) })
+            });
+            // Ideally we re-fetch or confirm success, but optimistic is fine for now
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to save order');
+            // Revert on error
+            fetchTest(); 
         }
     };
 
-    const saveSubtests = async () => {
-        setSaving(true);
+    const handleRemoveSubtest = async (subtestId: string) => {
+        if(!confirm('Are you sure you want to remove this test from the group?')) return;
         try {
+            // Filter out the ID
+            const newSubtestIds = (test?.subTests?.map(t => t._id) || []).filter(id => id !== subtestId);
+            
             const res = await fetch(`/api/v1/tests/${testId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    subTests: selectedSubtestIds
-                })
+                body: JSON.stringify({ subTests: newSubtestIds })
             });
+
             const data = await res.json();
             if(data.success) {
                 setTest(data.data);
-                setIsEditingSubtests(false);
-                toast.success('Sub-tests updated');
+                toast.success('Test removed from group');
             } else {
-                toast.error('Failed to update');
+                toast.error('Failed to remove test');
             }
         } catch(error) {
             console.error(error);
-            toast.error('Error saving changes');
-        } finally {
-            setSaving(false);
+            toast.error('Error removing test');
+        }
+    };
+
+    const handleDelete = async () => {
+        if(!confirm('Are you sure you want to delete this test?')) return;
+        try {
+            const res = await fetch(`/api/v1/tests/${testId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if(data.success) {
+                toast.success('Test deleted');
+                router.push(`/tests/${departmentId}`);
+            } else {
+                toast.error(data.error || 'Failed to delete');
+            }
+        } catch(e) {
+            console.error(e);
+            toast.error('Error deleting test');
         }
     };
 
     if (loading) return <div style={{ padding: '30px' }}>Loading...</div>;
     if (!test) return <div style={{ padding: '30px' }}>Test not found</div>;
 
+
     return (
         <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'var(--font-geist-sans)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', color: '#64748b', fontSize: '16px' }}>
-                <Link href={`/tests/${departmentId}`} style={{ color: 'inherit', textDecoration: 'none' }}>Tests</Link> <span>&gt;</span> <span>{test.name}</span>
+                <Link href="/tests" style={{ color: 'inherit', textDecoration: 'none' }}>Departments</Link> 
+                <span>&gt;</span>
+                <Link href={`/tests/${departmentId}`} style={{ color: 'inherit', textDecoration: 'none' }}>{test.department?.name || 'Department'}</Link> 
+                <span>&gt;</span> 
+                <span>{test.name}</span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '30px' }}>
@@ -150,9 +164,70 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                         {test.shortCode && <span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', color: '#64748b' }}>{test.shortCode}</span>}
                     </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '24px', fontWeight: 600, color: '#1e293b' }}>₹{test.price}</div>
-                    <div style={{ fontSize: '14px', color: '#64748b' }}>Rev Share: {test.revenueShare}%</div>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                     {test.type === 'group' && (
+                        <button
+                            onClick={() => router.push(`/tests/${departmentId}/create?groupId=${testId}`)}
+                            style={{
+                                padding: '8px 16px',
+                                background: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                            }}
+                        >
+                            + Add New Subtest
+                        </button>
+                     )}
+                     
+                     <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => router.push(`/tests/${departmentId}/${testId}/edit`)}
+                            style={{ 
+                                background: '#eff6ff', 
+                                color: '#3b82f6', 
+                                border: '1px solid #dbeafe', 
+                                borderRadius: '6px', 
+                                width: '35px', 
+                                height: '35px', 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                fontSize: '16px' 
+                            }}
+                            title="Edit"
+                        >
+                            ✏️
+                        </button>
+                        <button 
+                            onClick={handleDelete}
+                            style={{ 
+                                background: '#fff1f2', 
+                                color: '#f43f5e', 
+                                border: '1px solid #ffe4e6', 
+                                borderRadius: '6px', 
+                                width: '35px', 
+                                height: '35px', 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                fontSize: '18px' 
+                            }}
+                            title="Delete"
+                        >
+                            ×
+                        </button>
+                     </div>
+
+                    <div style={{ textAlign: 'right', marginLeft: '10px' }}>
+                        <div style={{ fontSize: '24px', fontWeight: 600, color: '#1e293b' }}>₹{test.price}</div>
+                        <div style={{ fontSize: '14px', color: '#64748b' }}>Rev Share: {test.revenueShare}%</div>
+                    </div>
                 </div>
             </div>
 
@@ -163,70 +238,134 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                 <div style={{ marginBottom: '40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                         <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1e293b' }}>Sub Tests ({test.subTests?.length || 0})</h2>
-                        {!isEditingSubtests && (
-                            <button 
-                                onClick={handleEditSubtests}
-                                style={{ padding: '6px 12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}
-                            >
-                                Manage Subtests
-                            </button>
-                        )}
+
                     </div>
 
-                    {isEditingSubtests ? (
-                        <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '20px', background: 'white' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Select Tests</h3>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button onClick={() => setIsEditingSubtests(false)} style={{ padding: '6px 12px', background: 'transparent', border: 'none', cursor: 'pointer' }}>Cancel</button>
-                                    <button 
-                                        onClick={saveSubtests} 
-                                        disabled={saving}
-                                        style={{ padding: '6px 16px', background: '#3f51b5', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                                    >
-                                        {saving ? 'Saving...' : 'Save Changes'}
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                                {allTests.map(t => (
-                                    <div 
-                                        key={t._id} 
-                                        onClick={() => toggleSubtestSelection(t._id)}
-                                        style={{ 
-                                            padding: '10px 15px', 
-                                            borderBottom: '1px solid #f1f5f9', 
-                                            cursor: 'pointer',
-                                            display: 'flex', 
-                                            justifyContent: 'space-between',
-                                            background: selectedSubtestIds.includes(t._id) ? '#eff6ff' : 'white'
-                                        }}
-                                    >
-                                        <span>{t.name}</span>
-                                        {selectedSubtestIds.includes(t._id) && <span style={{ color: '#3b82f6' }}>✓</span>}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                           {test.subTests && test.subTests.length > 0 ? (
-                               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                   <tbody>
-                                       {test.subTests.map((sub, idx) => (
-                                           <tr key={sub._id} style={{ borderBottom: idx < test.subTests!.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                                               <td style={{ padding: '12px 20px' }}>{sub.name}</td>
-                                               <td style={{ padding: '12px 20px', textAlign: 'right' }}>{sub.type}</td>
-                                           </tr>
-                                       ))}
-                                   </tbody>
-                               </table>
-                           ) : (
-                               <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>No sub-tests linked yet.</div>
-                           )}
-                        </div>
-                    )}
+                    <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                       {test.subTests && test.subTests.length > 0 ? (
+                           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                               <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                    <tr>
+                                        <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>Name</th>
+                                        <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>Type</th>
+                                        <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>Short Code</th>
+                                        <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>Price</th>
+                                        <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b', textAlign: 'right' }}>Actions</th>
+                                    </tr>
+                               </thead>
+                               <tbody>
+                                   {test.subTests.map((sub, idx) => (
+                                       <tr 
+                                            key={sub._id} 
+                                            onClick={() => router.push(`/tests/${departmentId}/${sub._id}`)}
+                                            className="test-row"
+                                            style={{ borderBottom: idx < test.subTests!.length - 1 ? '1px solid #f1f5f9' : 'none' }}
+                                       >
+                                           <td style={{ padding: '16px', fontWeight: 500, color: '#1e293b' }}>{sub.name}</td>
+                                           <td style={{ padding: '16px' }}>
+                                                <span style={{ 
+                                                    padding: '4px 10px', 
+                                                    borderRadius: '20px', 
+                                                    fontSize: '12px', 
+                                                    fontWeight: 500,
+                                                    background: sub.type === 'normal' ? '#e0f2fe' : sub.type === 'descriptive' ? '#f3e8ff' : '#fef3c7',
+                                                    color: sub.type === 'normal' ? '#0369a1' : sub.type === 'descriptive' ? '#7e22ce' : '#b45309',
+                                                    textTransform: 'capitalize'
+                                                }}>
+                                                    {sub.type}
+                                                </span>
+                                           </td>
+                                           <td style={{ padding: '16px', color: '#475569' }}>{sub.shortCode || '-'}</td>
+                                           <td style={{ padding: '16px', fontWeight: 600, color: '#1e293b' }}>₹{sub.price}</td>
+                                           <td style={{ padding: '16px', textAlign: 'right' }}>
+                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '8px' }}>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleReorder(idx, 'up'); }}
+                                                                disabled={idx === 0}
+                                                                style={{
+                                                                    border: 'none', background: 'none', cursor: idx === 0 ? 'default' : 'pointer',
+                                                                    padding: 0, fontSize: '10px', color: idx === 0 ? '#cbd5e1' : '#64748b', lineHeight: 1
+                                                                }}
+                                                                title="Move Up"
+                                                            >
+                                                                ▲
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleReorder(idx, 'down'); }}
+                                                                disabled={idx === (test.subTests?.length || 0) - 1}
+                                                                style={{
+                                                                    border: 'none', background: 'none', cursor: idx === (test.subTests?.length || 0) - 1 ? 'default' : 'pointer',
+                                                                    padding: 0, fontSize: '10px', color: idx === (test.subTests?.length || 0) - 1 ? '#cbd5e1' : '#64748b', lineHeight: 1
+                                                                }}
+                                                                title="Move Down"
+                                                            >
+                                                                ▼
+                                                            </button>
+                                                        </div>
+
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                router.push(`/tests/${departmentId}/${sub._id}/edit`);
+                                                            }}
+                                                            style={{ 
+                                                                background: '#eff6ff', 
+                                                                color: '#3b82f6', 
+                                                                border: '1px solid #dbeafe', 
+                                                                borderRadius: '6px', 
+                                                                width: '30px', 
+                                                                height: '30px', 
+                                                                cursor: 'pointer', 
+                                                                display: 'flex', 
+                                                                alignItems: 'center', 
+                                                                justifyContent: 'center', 
+                                                                fontSize: '14px' 
+                                                            }}
+                                                            title="Edit Subtest"
+                                                        >
+                                                            ✏️
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleRemoveSubtest(sub._id);
+                                                            }}
+                                                            style={{ 
+                                                                background: '#fff1f2', 
+                                                                color: '#f43f5e', 
+                                                                border: '1px solid #ffe4e6', 
+                                                                borderRadius: '6px', 
+                                                                width: '30px', 
+                                                                height: '30px', 
+                                                                cursor: 'pointer', 
+                                                                display: 'flex', 
+                                                                alignItems: 'center', 
+                                                                justifyContent: 'center', 
+                                                                fontSize: '16px' 
+                                                            }}
+                                                            title="Remove from Group"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                           </td>
+                                       </tr>
+                                   ))}
+                               </tbody>
+                           </table>
+                       ) : (
+                           <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                               <p style={{ marginBottom: '10px', fontSize: '16px' }}>No sub-tests in this group yet.</p>
+                               <button 
+                                    onClick={() => router.push(`/tests/${departmentId}/create?groupId=${testId}`)}
+                                    style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+                               >
+                                   + Create New Subtest
+                               </button>
+                           </div>
+                       )}
+                    </div>
                 </div>
             )}
 

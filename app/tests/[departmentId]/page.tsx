@@ -2,6 +2,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 interface Test {
     _id: string;
@@ -56,6 +57,25 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
         }
     };
 
+const handleDelete = async (e: React.MouseEvent, testId: string) => {
+        e.stopPropagation(); // Prevent row click
+        if(!confirm('Are you sure you want to delete this test?')) return;
+
+        try {
+            const res = await fetch(`/api/v1/tests/${testId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if(data.success) {
+                toast.success('Test deleted successfully');
+                setTests(tests.filter(t => t._id !== testId));
+            } else {
+                toast.error(data.error || 'Failed to delete');
+            }
+        } catch(error) {
+            console.error(error);
+            toast.error('Error deleting test');
+        }
+    };
+
     return (
         <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'var(--font-geist-sans)' }}>
             <div style={{ marginBottom: '20px', color: '#64748b', fontSize: '16px' }}>
@@ -94,12 +114,13 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
                                 <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>Type</th>
                                 <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>Short Code</th>
                                 <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>Price</th>
+                                <th style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#64748b', textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {tests.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>No tests found in this department. Create one!</td>
+                                    <td colSpan={5} style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>No tests found in this department. Create one!</td>
                                 </tr>
                             ) : (
                                 tests.map(test => (
@@ -126,6 +147,51 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
                                         </td>
                                         <td style={{ padding: '16px', color: '#475569' }}>{test.shortCode || '-'}</td>
                                         <td style={{ padding: '16px', fontWeight: 600, color: '#1e293b' }}>₹{test.price}</td>
+                                        <td style={{ padding: '16px', textAlign: 'right' }}>
+                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        router.push(`/tests/${departmentId}/${test._id}/edit`);
+                                                    }}
+                                                    style={{ 
+                                                        background: '#eff6ff', 
+                                                        color: '#3b82f6', 
+                                                        border: '1px solid #dbeafe', 
+                                                        borderRadius: '6px', 
+                                                        width: '30px', 
+                                                        height: '30px', 
+                                                        cursor: 'pointer', 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        justifyContent: 'center', 
+                                                        fontSize: '14px' 
+                                                    }}
+                                                    title="Edit"
+                                                >
+                                                    ✏️
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => handleDelete(e, test._id)}
+                                                    style={{ 
+                                                        background: '#fff1f2', 
+                                                        color: '#f43f5e', 
+                                                        border: '1px solid #ffe4e6', 
+                                                        borderRadius: '6px', 
+                                                        width: '30px', 
+                                                        height: '30px', 
+                                                        cursor: 'pointer', 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        justifyContent: 'center', 
+                                                        fontSize: '16px' 
+                                                    }}
+                                                    title="Delete"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -133,16 +199,6 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
                     </table>
                 </div>
             )}
-            <style jsx>{`
-                .test-row {
-                    border-bottom: 1px solid #f1f5f9;
-                    cursor: pointer;
-                    transition: background-color 0.2s;
-                }
-                .test-row:hover {
-                    background-color: #f8fafc;
-                }
-            `}</style>
         </div>
     );
 }

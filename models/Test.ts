@@ -13,6 +13,7 @@ export interface ITest extends Document {
     unit?: string;
     method?: string;
     formula?: string;
+    interpretation?: string;
     referenceRanges?: {
         name: string;
         min: number;
@@ -24,6 +25,7 @@ export interface ITest extends Document {
 
     // Group Test Fields
     subTests?: mongoose.Types.ObjectId[];
+    parentGroup?: mongoose.Types.ObjectId;
 
     createdAt: Date;
     updatedAt: Date;
@@ -53,13 +55,15 @@ const TestSchema = new Schema<ITest>({
     unit: { type: String },
     method: { type: String },
     formula: { type: String },
+    interpretation: { type: String },
     referenceRanges: [ReferenceRangeSchema],
 
     // Descriptive Test Specifics
     template: { type: String }, // HTML content from rich text editor
 
     // Group Test Specifics
-    subTests: [{ type: Schema.Types.ObjectId, ref: 'Test' }]
+    subTests: [{ type: Schema.Types.ObjectId, ref: 'Test' }],
+    parentGroup: { type: Schema.Types.ObjectId, ref: 'Test' }
 
 }, { timestamps: true });
 

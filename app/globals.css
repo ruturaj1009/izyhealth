@@ -31,6 +31,12 @@ body {
 
 /* ================= SPECIFIC PAGE STYLES (PATIENT/DOCTOR) ================= */
 /* We will use CSS Modules for conflicting styles, but some generic utility-like styles can live here or be migrated to modules later. */
-/* For now, sticking to the strategy of keeping main styles global if they don't conflic heavily, or creating specific files. 
-   The legacy style.css was minimal. I will rely on CSS Modules for specific pages to ensure isolation. 
-*/
+
+.test-row {
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.test-row:hover {
+    background-color: #f8fafc;
+}
