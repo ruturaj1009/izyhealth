@@ -101,6 +101,7 @@ Retrieve tests, optionally filtered by department.
 -   **Endpoint**: `GET /tests`
 -   **Query Parameters**:
     -   `department` (Optional): Filter by Department ID.
+    -   `includeSubtests` (Optional): Set to `true` to include subtests in the list (hidden by default).
 -   **Response**:
     ```json
     {
@@ -131,6 +132,7 @@ Create a new single test (Normal, Descriptive, or Group).
       "price": 500,
       "shortCode": "CBC",
       "revenueShare": 10,
+      "groupId": "678...", // Optional: ID of parent group to link this test as a subtest
       
       // If type === 'normal'
       "unit": "g/dL",
@@ -166,7 +168,7 @@ Update a test (e.g., adding sub-tests to a group).
 -   **Body**:
     ```json
     {
-      "subTests": ["testId1", "testId2"]
+      "subTests": ["testId1", "testId2"] // Send reordered array of IDs to update order
     }
     ```
 -   **Response**: `200 OK`
