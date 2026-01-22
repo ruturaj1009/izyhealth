@@ -19,7 +19,7 @@ export default function TopHeader({ onMenuClick, onMenuHover }: Props) {
                     <i className={`fa fa-bars ${styles.menuBtn}`}></i>
                 </div>
                 <Link href="/" className={styles.title} style={{marginLeft:'15px', textDecoration:'none', color:'inherit'}}>
-                    Home
+                    X Pharma | Rutu Dev Lab
                 </Link>
             </div>
 

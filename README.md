@@ -12,12 +12,16 @@ A modern, full-stack healthcare management application built with **Next.js 16**
 -   **Test Management**:
     -   **Department-Centric Workflow**: Organize and browse tests by department.
     -   **Flexible Test Types**: Support for Normal (ranges), Descriptive (rich text), and Group tests.
+    -   **Group & Subtest Logic**: 
+        -   Strict parent-child relationships (subtests must be created within a group).
+        -   Easy reordering of subtests within a group.
     -   **Rich Text Editor**: Integrated Tiptap editor for creating comprehensive descriptive test templates with tables and formatting.
 -   **Role-Based Access**: Specialized views and logic for `PATIENT`, `DOCTOR`, and `ADMIN` roles using Mongoose discriminators.
 -   **Modern UI/UX**:
     -   Responsive Flexbox layouts.
     -   Sticky headers and independent scrollable lists.
     -   Polished, vibrant UI components with interactive states.
+    -   **Enhanced Feedback**: `react-hot-toast` integration for non-blocking success/error notifications and delete confirmations.
     -   Glassmorphism effects and smooth transitions.
 
 ## 🛠 Tech Stack

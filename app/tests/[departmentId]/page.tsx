@@ -57,23 +57,60 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
         }
     };
 
-const handleDelete = async (e: React.MouseEvent, testId: string) => {
+    const handleDelete = (e: React.MouseEvent, testId: string) => {
         e.stopPropagation(); // Prevent row click
-        if(!confirm('Are you sure you want to delete this test?')) return;
-
-        try {
-            const res = await fetch(`/api/v1/tests/${testId}`, { method: 'DELETE' });
-            const data = await res.json();
-            if(data.success) {
-                toast.success('Test deleted successfully');
-                setTests(tests.filter(t => t._id !== testId));
-            } else {
-                toast.error(data.error || 'Failed to delete');
-            }
-        } catch(error) {
-            console.error(error);
-            toast.error('Error deleting test');
-        }
+        toast((t) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontWeight: 600 }}>Are you sure you want to delete this test?</div>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{
+                            padding: '6px 12px',
+                            background: '#f1f5f9',
+                            color: '#64748b',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 500
+                        }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                const res = await fetch(`/api/v1/tests/${testId}`, { method: 'DELETE' });
+                                const data = await res.json();
+                                if(data.success) {
+                                    toast.success('Test deleted successfully');
+                                    setTests(tests.filter(t => t._id !== testId));
+                                } else {
+                                    toast.error(data.error || 'Failed to delete');
+                                }
+                            } catch(error) {
+                                console.error(error);
+                                toast.error('Error deleting test');
+                            }
+                        }}
+                        style={{
+                            padding: '6px 12px',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 500
+                        }}
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
     };
 
     return (
