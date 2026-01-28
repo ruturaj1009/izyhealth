@@ -30,7 +30,18 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    const query = role ? { role } : {};
+    const search = searchParams.get('search');
+
+    let query: any = {};
+    if (role) query.role = role;
+    if (search) {
+        query.$or = [
+            { firstName: { $regex: search, $options: 'i' } },
+            { lastName: { $regex: search, $options: 'i' } },
+            { mobile: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } }
+        ];
+    }
 
     try {
         const total = await User.countDocuments(query);

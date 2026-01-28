@@ -26,6 +26,7 @@ interface Test {
     method?: string;
     formula?: string;
     referenceRanges?: ReferenceRange[];
+    interpretation?: string;
     // Descriptive
     template?: string;
     // Group
@@ -486,6 +487,21 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+    {test.type === 'normal' && test.interpretation && (
+                <div style={{ marginBottom: '30px' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1e293b', marginBottom: '15px' }}>Interpretation</h2>
+                    <div 
+                        style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px', minHeight: '200px', background: '#fcfcfc' }}
+                        dangerouslySetInnerHTML={{ __html: test.interpretation }}
+                     />
+                     <style jsx global>{`
+                        table { border-collapse: collapse; width: 100%; }
+                        td, th { border: 1px solid #cbd5e1; padding: 5px; }
+                        th { background: #f1f5f9; }
+                     `}</style>
                 </div>
             )}
 
