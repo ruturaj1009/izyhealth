@@ -199,6 +199,13 @@ export default function CreateBillPage() {
         if (!selectedDoctor) return toast.error('Doctor is missing');
         if (selectedTests.length === 0) return toast.error('No tests selected');
 
+        // Validation: Prevent overpayment
+        const totalValidation = calculateTotal();
+        const discountValidation = calculateDiscountAmount();
+        if (paidAmount > (totalValidation - discountValidation)) {
+            return toast.error('Paid amount cannot exceed the net bill amount');
+        }
+
         setLoading(true);
         try {
             let patientId = selectedPatient?._id;

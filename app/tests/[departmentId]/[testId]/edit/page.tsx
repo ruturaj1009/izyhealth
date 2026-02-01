@@ -43,8 +43,7 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
     // Interpretation Content
     const [interpretation, setInterpretation] = useState('');
 
-    // Descriptive Test Specifics
-    const [template, setTemplate] = useState('');
+    // Descriptive Test Specifics - merged into interpretation
 
     useEffect(() => {
         // Optional: Fetch department name for display
@@ -86,8 +85,7 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
                     if(t.interpretation) setShowInterpretation(true);
 
                     setReferenceRanges(t.referenceRanges || []);
-                } else if (t.type === 'descriptive') {
-                    setTemplate(t.template || '');
+                    setInterpretation(t.interpretation || t.template || '');
                 }
             } else {
                 toast.error('Failed to load test data');
@@ -139,7 +137,7 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
                 payload.interpretation = showInterpretation ? interpretation : '';
                 payload.referenceRanges = referenceRanges;
             } else if (testType === 'descriptive') {
-                payload.template = template;
+                payload.interpretation = interpretation;
             } 
             
             const res = await fetch(`/api/v1/tests/${testId}`, {
@@ -411,15 +409,15 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
 
 
 
-            {testType === 'descriptive' && (
                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>Default Lab Result Template</label>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>
+                        {testType === 'descriptive' ? 'Default Content / Template' : 'Interpretation'}
+                    </label>
                     <RichTextEditor 
-                        content={template} 
-                        onChange={(html) => setTemplate(html)} 
+                        content={interpretation} 
+                        onChange={(html) => setInterpretation(html)} 
                     />
                  </div>
-            )}
             
             {testType === 'group' && (
                  <div style={{ padding: '20px', background: '#e0f2fe', borderRadius: '8px', color: '#0369a1' }}>

@@ -19,6 +19,7 @@ export interface IBill extends Document {
     dueAmount: number;
 
     paymentType: PaymentType;
+    duePaymentType?: PaymentType;
     status: BillStatus;
 
     notes?: string;

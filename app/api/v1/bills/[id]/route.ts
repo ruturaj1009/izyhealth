@@ -58,7 +58,51 @@ export async function PUT(
         const body = await request.json();
         // Extract fields we allow updating
         // We expect: tests, totalAmount, discountAmount, paidAmount, dueAmount, paymentType, discountType, status
-        const { tests, totalAmount, discountAmount, paidAmount, dueAmount, paymentType, discountType, status } = body;
+        // AND maybe collectDueAmount, duePaymentType (for "Collect Due" and "Add Test" extra payment)
+        const {
+            tests, totalAmount, discountAmount, paidAmount, dueAmount,
+            paymentType, discountType, status,
+            collectDueAmount, duePaymentType
+        } = body;
+
+        let finalPaidAmount = paidAmount;
+        let finalDueAmount = dueAmount;
+        let finalStatus = status;
+
+        // Special handling for "Collect Due" or "Add Test" payment
+        if (collectDueAmount !== undefined && collectDueAmount !== null) {
+            // Frontend might send the NEW total paidAmount, or we might need to increment. 
+            // Existing logic in "Add Test" sends the NEW `paidAmount` (totalPaid).
+            // But "Collect Due" modal might send just the incremental amount?
+            // Let's check frontend implementation.
+
+            // "Add Test" logic: sends `paidAmount` (which is total).
+            // "Collect Due" logic: sends `collectDueAmount`. 
+
+            // If `paidAmount` is provided in body, trust it as the TOTAL paid.
+            // If `collectDueAmount` is provided (from Collect Due modal), we need to fetch current bill to increment?
+            // OR frontend can send total.
+
+            // Let's look at "Collect Due" frontend: sends `collectDueAmount`. It does NOT send `paidAmount`.
+            // So we need to fetch current bill to update.
+
+            if (paidAmount === undefined) {
+                const currentBill = await Bill.findById(id);
+                if (!currentBill) return NextResponse.json({ status: 404, error: 'Bill not found' }, { status: 404 });
+
+                finalPaidAmount = currentBill.paidAmount + Number(collectDueAmount);
+                finalDueAmount = Math.max(0, currentBill.totalAmount - currentBill.discountAmount - finalPaidAmount);
+            }
+        }
+
+        // Auto-update status based on due amount
+        if (finalDueAmount <= 0) {
+            finalStatus = 'PAID';
+        } else if (finalDueAmount < (totalAmount - discountAmount)) {
+            finalStatus = 'PARTIAL'; // Or keep existing if logic differs
+        } else {
+            finalStatus = 'PENDING';
+        }
 
         // 1. Update Bill
         const updatedBill = await Bill.findByIdAndUpdate(
@@ -67,11 +111,12 @@ export async function PUT(
                 tests,
                 totalAmount,
                 discountAmount,
-                paidAmount,
-                dueAmount,
+                paidAmount: finalPaidAmount,
+                dueAmount: finalDueAmount,
                 paymentType,
+                duePaymentType, // Save the secondary payment type
                 discountType,
-                status // e.g. if PAID -> PARTIAL or vice versa
+                status: finalStatus
             },
             { new: true }
         ).populate('tests.test');
@@ -114,9 +159,14 @@ export async function PUT(
             }
         }
 
+        const billData = updatedBill.toObject();
+        billData.reportStatus = report ? report.status : 'INITIAL';
+        billData.reportId = report ? report.reportId : null;
+        billData.reportMongoId = report ? report._id : null;
+
         return NextResponse.json({
             status: 200,
-            data: updatedBill,
+            data: billData,
             message: 'Bill updated and Report synced'
         });
 

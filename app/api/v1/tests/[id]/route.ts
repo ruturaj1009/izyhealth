@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Test from '@/models/Test';
+import '@/models/Department'; // Register Department model for population
 
 export async function GET(
     req: NextRequest,

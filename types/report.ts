@@ -17,10 +17,10 @@ export interface IReport extends Document {
     bill: mongoose.Types.ObjectId | IBill;
     patient: mongoose.Types.ObjectId | IUser;
     doctor: mongoose.Types.ObjectId | IUser;
-    reportId: string; // Friendly ID
     date: Date;
     status: ReportStatus;
     results: ITestResult[];
+    impression?: string;
     createdAt: Date;
     updatedAt: Date;
 }

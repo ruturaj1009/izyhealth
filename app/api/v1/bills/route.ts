@@ -72,10 +72,6 @@ export async function POST(request: Request) {
         // --- Create Linked Report ---
         try {
             const Report = (await import('@/models/Report')).default;
-            const reportCount = await Report.countDocuments();
-            // Simple sequential ID. For production, consider a more robust counter.
-            const reportId = (reportCount + 1).toString();
-
             const reportResults = bill.tests.map((t: any) => ({
                 testId: t.test._id,
                 testName: t.test.name,
@@ -87,7 +83,6 @@ export async function POST(request: Request) {
                     bill: bill._id,
                     patient: bill.patient._id,
                     doctor: bill.doctor._id,
-                    reportId: reportId,
                     results: reportResults,
                     status: ReportStatus.INITIAL
                 });
@@ -98,7 +93,6 @@ export async function POST(request: Request) {
                     bill: bill._id,
                     patient: bill.patient._id,
                     doctor: bill.doctor._id,
-                    reportId: reportId,
                     results: reportResults,
                     status: ReportStatus.PENDING
                 });

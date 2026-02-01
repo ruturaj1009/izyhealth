@@ -65,6 +65,12 @@ export default function ViewBillPage() {
         count: 1
     });
 
+    // Collect Due Modal State
+    const [showCollectDueModal, setShowCollectDueModal] = useState(false);
+    const [collectAmount, setCollectAmount] = useState<number | ''>('');
+    const [collectPaymentType, setCollectPaymentType] = useState('CASH');
+    const [submittingDue, setSubmittingDue] = useState(false);
+
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
         documentTitle: `Bill-${bill?._id || 'Receipt'}`,
@@ -95,6 +101,41 @@ export default function ViewBillPage() {
             setLoading(false);
         }
     }
+
+    const handleCollectDueSubmit = async () => {
+        if (!bill || !collectAmount) return;
+
+        if (Number(collectAmount) > bill.dueAmount) {
+            alert('Cannot collect more than the due amount');
+            return;
+        }
+
+        setSubmittingDue(true);
+        try {
+            const res = await fetch(`/api/v1/bills/${bill._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    collectDueAmount: Number(collectAmount),
+                    duePaymentType: collectPaymentType
+                })
+            });
+            const data = await res.json();
+            if (data.status === 200) {
+                setBill(data.data); // Update with new bill data (status PAID etc)
+                setShowCollectDueModal(false);
+                setCollectAmount('');
+                // Success toast?
+            } else {
+                console.error(data.error);
+                // Error toast?
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setSubmittingDue(false);
+        }
+    };
 
     if (loading) return <div style={{padding:'50px', textAlign:'center'}}>Loading Bill...</div>;
     if (!bill) return <div style={{padding:'50px', textAlign:'center'}}>Bill not found</div>;
@@ -222,6 +263,19 @@ export default function ViewBillPage() {
                         <button className={`${styles.btn} ${styles.btnGreen}`} style={{background:'#f59e0b'}}>+ ADD TEST</button>
                     </Link>
 
+                    {bill.dueAmount > 0 && (
+                        <button 
+                            onClick={() => {
+                                setCollectAmount(bill.dueAmount); 
+                                setShowCollectDueModal(true);
+                            }} 
+                            className={`${styles.btn} ${styles.btnGreen}`}
+                            style={{background:'#8b5cf6'}}
+                        >
+                            COLLECT DUE
+                        </button>
+                    )}
+
                     <button className={`${styles.btn} ${styles.btnBlue}`}>PRINT SETTINGS</button>
                     <button className={`${styles.btn} ${styles.btnGreen}`}>SEND WHATSAPP</button>
                     <button className={`${styles.btn} ${styles.btnBlue}`}>MORE</button>
@@ -259,6 +313,7 @@ export default function ViewBillPage() {
                     <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', width: '400px' }}>
                         <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 600 }}>Print Barcode Sticker</h2>
                         
+                        {/* ... Existing Barcode Modal Content ... */}
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
                             <input 
                                 type="checkbox" 
@@ -304,6 +359,74 @@ export default function ViewBillPage() {
                                 style={{ padding: '10px 20px', border: 'none', background: '#1d4ed8', color: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
                             >
                                 PRINT BARCODE STICKER
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Collect Due Modal */}
+            {showCollectDueModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                }}>
+                    <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', width: '350px' }}>
+                        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 600 }}>Collect Due Amount</h2>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', color: '#64748b' }}>Due Amount</label>
+                             <div style={{ fontSize: '16px', fontWeight: 700, color: '#ef4444' }}>₹{bill?.dueAmount}</div>
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', color: '#64748b' }}>Collect Amount</label>
+                            <input 
+                                type="number" 
+                                value={collectAmount} 
+                                onChange={e => setCollectAmount(Number(e.target.value))}
+                                max={bill?.dueAmount}
+                                min={0}
+                                placeholder="Enter Amount"
+                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '15px' }} 
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '25px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', color: '#64748b' }}>Payment Type</label>
+                            <select 
+                                value={collectPaymentType} 
+                                onChange={e => setCollectPaymentType(e.target.value)}
+                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '15px' }}
+                            >
+                                <option value="CASH">CASH</option>
+                                <option value="UPI">UPI</option>
+                                <option value="CARD">CARD</option>
+                            </select>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <button 
+                                onClick={() => setShowCollectDueModal(false)}
+                                style={{ padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 600, color: '#333' }}
+                            >
+                                CANCEL
+                            </button>
+                            <button 
+                                onClick={handleCollectDueSubmit}
+                                disabled={submittingDue}
+                                style={{ 
+                                    padding: '10px 20px', 
+                                    border: 'none', 
+                                    background: '#8b5cf6', 
+                                    color: 'white', 
+                                    borderRadius: '4px', 
+                                    cursor: 'pointer', 
+                                    fontWeight: 600,
+                                    opacity: submittingDue ? 0.7 : 1
+                                }}
+                            >
+                                {submittingDue ? 'Collecting...' : 'COLLECT'}
                             </button>
                         </div>
                     </div>

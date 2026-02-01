@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Barcode from 'react-barcode';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface BillReceiptProps {
     bill: {
@@ -108,7 +109,7 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
                     </div>
                 </div>
 
-                <div style={{ width: '120px', textAlign: 'right' }}>
+                <div style={{ width: '120px', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
                     <Barcode 
                         value={billIdShort} 
                         height={30} 
@@ -117,6 +118,13 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
                         fontSize={10} 
                         margin={0}
                     />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                         <QRCodeSVG 
+                            value={`${process.env.NEXT_PUBLIC_APP_URL || 'https://x-pharma.vercel.app'}/bills/${bill._id}/view`} 
+                            size={50} 
+                        />
+                         <div style={{ fontSize: '9px', marginTop: '2px', color: '#666' }}>Scan to View</div>
+                    </div>
                 </div>
             </div>
 
@@ -153,7 +161,7 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
             </div>
 
             {/* Footer Signatory */}
-            <div style={{ marginTop: '60px', textAlign: 'right' }}>
+            <div style={{ marginTop: '120px', textAlign: 'right' }}>
                  <div style={{ display: 'inline-block', textAlign: 'center' }}>
                     <div style={{ borderTop: '2px solid #000', width: '200px', marginBottom: '5px' }}></div>
                     <span style={{ fontSize: '14px', fontWeight: 600 }}>Authorized Signatory</span>

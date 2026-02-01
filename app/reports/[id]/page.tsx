@@ -1,22 +1,35 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { toast, Toaster } from 'react-hot-toast'; 
+import { useState, useEffect, Fragment, useRef } from 'react';
+import { toast, Toaster } from 'react-hot-toast';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useReactToPrint } from 'react-to-print';
+import { ReportPrint } from '@/app/components/ReportPrint';
 import { ReportStatus } from '@/enums/report';
+import RichTextEditor from '@/app/components/RichTextEditor';
 
 interface TestResult {
-    testId: string;
+    testId: string | { 
+        _id: string; 
+        name: string; 
+        unit?: string; 
+        referenceRanges?: { name?: string; min?: string; max?: string }[];
+        department?: { name: string };
+        interpretation?: string;
+        method?: string;
+        type?: string;
+    };
     testName: string;
     resultValue: string;
     unit?: string;
     referenceRange?: string;
     status: string;
+    remarks?: string;
+    method?: string;
 }
 
 interface Report {
     _id: string;
-    reportId: string;
     date: string;
     status: string;
     patient: { _id: string; firstName: string; lastName: string; phone: string; age: number; gender: string };
@@ -24,6 +37,7 @@ interface Report {
     bill: { _id: string; dueAmount: number };
     results: TestResult[];
     createdAt: string;
+    impression?: string;
 }
 
 export default function ReportDetailsPage() {
@@ -34,6 +48,33 @@ export default function ReportDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     
+    // Track which rows are in edit mode by index
+    const [editingRows, setEditingRows] = useState<Record<number, boolean>>({});
+    
+    // Store temporary edits before saving
+    const [tempEdits, setTempEdits] = useState<Record<number, Partial<TestResult>>>({});
+
+    // Interpretation Modal State
+    const [showInterpModal, setShowInterpModal] = useState(false);
+    const [currentInterp, setCurrentInterp] = useState<{ index: number, text: string }>({ index: -1, text: '' });
+
+    // Impression State
+    const [showImpressionInput, setShowImpressionInput] = useState(false);
+    const [tempImpression, setTempImpression] = useState('');
+
+    // Print Settings State
+    const [showPrintSettings, setShowPrintSettings] = useState(false);
+    const [watermarkText, setWatermarkText] = useState('Health Amaze Demo Account');
+
+    // Print Handling
+    const printRef = useRef<HTMLDivElement>(null);
+    const handlePrint = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: `Report_${report?.patient?.firstName || 'Patient'}`,
+    });
+
+    // Status Options & Mapping
+
     // Status Options & Mapping
     const statusOptions = ['Initial', 'In Process', 'Completed', 'Verified & Signed', 'Printed', 'Delivered'];
     const reportStatusMap: Record<string, string> = {
@@ -91,44 +132,231 @@ export default function ReportDetailsPage() {
     };
 
     const handleResultChange = (index: number, field: keyof TestResult, value: string) => {
-        if (!report) return;
-        const newResults = [...report.results];
-        // @ts-ignore
-        newResults[index][field] = value;
-        setReport({ ...report, results: newResults });
+        setTempEdits(prev => ({
+            ...prev,
+            [index]: {
+                ...prev[index],
+                [field]: value
+            }
+        }));
     };
 
-    const saveResults = async () => {
-        if (!report) return;
-        setSaving(true);
-        try {
+    const toggleEdit = (index: number) => {
+        const isEditing = !editingRows[index];
+        setEditingRows(prev => ({ ...prev, [index]: isEditing }));
+        
+        if (isEditing && report) {
+            // Initialize temp state with current values
+            setTempEdits(prev => ({
+                ...prev,
+                [index]: { ...report.results[index] }
+            }));
+        } else {
+            // Clear temp state for this row
+            setTempEdits(prev => {
+                const newState = { ...prev };
+                delete newState[index];
+                return newState;
+            });
+        }
+    };
+
+    const cancelEdit = (index: number) => {
+        setEditingRows(prev => ({ ...prev, [index]: false }));
+        setTempEdits(prev => {
+            const newState = { ...prev };
+            delete newState[index];
+            return newState;
+        });
+    };
+
+    const openInterpModal = (index: number, defaultText: string) => {
+        const result = report?.results[index];
+        // For descriptive tests, we might want to use the default text (template) if remarks are empty
+        const existing = result?.remarks || defaultText || '';
+        setCurrentInterp({ index, text: existing });
+        setShowInterpModal(true);
+    };
+
+    const saveInterp = () => {
+        if (currentInterp.index > -1 && report) {
+            // Optimistic update
+            const newResults = [...report.results];
+            newResults[currentInterp.index].remarks = currentInterp.text;
+            setReport({ ...report, results: newResults });
+            setShowInterpModal(false);
+            
+            saveInterpretationResult(currentInterp.index, currentInterp.text);
+        }
+    };
+
+    const saveInterpretationResult = async (index: number, text: string) => {
+         if (!report) return;
+         setSaving(true);
+         try {
+             // We need to construct the full results array with the updated remark
+             const updatedResults = [...report.results];
+             updatedResults[index] = { ...updatedResults[index], remarks: text };
+
+             const cleanResults = updatedResults.map(r => ({
+                ...r,
+                testId: typeof r.testId === 'object' ? (r.testId as any)._id : r.testId
+            }));
+
             const res = await fetch(`/api/v1/reports/${report._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ results: report.results })
+                body: JSON.stringify({ results: cleanResults })
+            });
+
+            if (res.ok) {
+                 const data = await res.json();
+                 setReport(data.data);
+                 toast.success('Interpretation saved');
+            } else {
+                 toast.error('Failed to save');
+            }
+         } catch(err) {
+             console.error(err);
+         } finally {
+             setSaving(false);
+         }
+    };
+
+    const saveRow = async (index: number) => {
+        if (!report) return;
+        
+        const edits = tempEdits[index];
+        if (!edits) {
+            toggleEdit(index); // Just close if no edits
+            return;
+        }
+
+        setSaving(true);
+        try {
+            // update local report copy with edits
+            const updatedResults = [...report.results];
+            updatedResults[index] = { ...updatedResults[index], ...edits };
+
+            const cleanResults = updatedResults.map(r => ({
+                ...r,
+                testId: typeof r.testId === 'object' ? (r.testId as any)._id : r.testId
+            }));
+
+            const res = await fetch(`/api/v1/reports/${report._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ results: cleanResults })
             });
             const data = await res.json();
             if (res.ok) {
                 setReport(data.data);
-                toast.success('Results saved successfully');
+                setEditingRows(prev => ({ ...prev, [index]: false }));
+                setTempEdits(prev => {
+                    const newState = { ...prev };
+                    delete newState[index];
+                    return newState;
+                });
+                toast.success('Result updated');
             } else {
-                toast.error('Failed to save results');
+                toast.error('Failed to save result');
             }
         } catch (err) {
             console.error(err);
+            toast.error('Error saving result');
         } finally {
             setSaving(false);
         }
     };
+    
 
-    if (loading) return <div style={{padding:'40px', textAlign:'center'}}>Loading...</div>;
-    if (!report) return <div style={{padding:'40px', textAlign:'center'}}>Report not found</div>;
+    
+    const handleSaveImpression = async () => {
+        if (!report) return;
+        try {
+             const res = await fetch(`/api/v1/reports/${report._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ impression: tempImpression })
+            });
+
+            if (res.ok) {
+                 // Update local state
+                 setReport(prev => prev ? ({ ...prev, impression: tempImpression }) : null);
+                 setShowImpressionInput(false);
+                 toast.success('Impression saved');
+            } else {
+                 toast.error('Failed to save impression');
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Error saving impression');
+        }
+    };
+
+    const handleCancelImpression = () => {
+        setShowImpressionInput(false);
+        setTempImpression(report?.impression || ''); // Reset to original
+    };
+
+    const openImpressionInput = () => {
+        setTempImpression(report?.impression || '');
+        setShowImpressionInput(true);
+    };
+
+
+    
+    // Reference Range Helper
+    const formatReferenceRanges = (ranges: any[]) => {
+        if (!ranges || ranges.length === 0) return '';
+        return ranges.map((r) => {
+            let val = '';
+            if (r.min && r.max) val = `${r.min} - ${r.max}`;
+            else if (r.min) val = `> ${r.min}`;
+            else if (r.max) val = `< ${r.max}`;
+            
+            if (!val) return null;
+            
+            // "Name : range value"
+            // "Skip name if it is not there"
+            return r.name ? `${r.name}: ${val}` : val;
+        }).filter(Boolean).join(', ');
+    };
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleString('en-IN', {
              year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit' 
         });
     };
+
+    // Group tests by department
+    const groupedResults: Record<string, { result: TestResult, originalIndex: number }[]> = {};
+    if (report) {
+        report.results.forEach((result, idx) => {
+            // @ts-ignore
+            const deptName = result.testId?.department?.name || 'General';
+            if (!groupedResults[deptName]) {
+                groupedResults[deptName] = [];
+            }
+            groupedResults[deptName].push({ result, originalIndex: idx });
+        });
+    }
+
+    if (loading) return <div style={{padding:'40px', textAlign:'center'}}>Loading...</div>;
+    if (!report) return <div style={{padding:'40px', textAlign:'center'}}>Report not found</div>;
+
+    const actionBtnStyle = (bgColor: string) => ({
+        background: bgColor,
+        color: 'white',
+        padding: '8px 16px',
+        border: 'none',
+        borderRadius: '4px',
+        fontWeight: 600,
+        fontSize: '12px',
+        cursor: 'pointer',
+        textTransform: 'uppercase' as const,
+        // boxShadow: '0 2px 4px rgba(0,0,0,0.1)' // Removed to match bill page
+    });
 
     return (
         <div style={{ padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
@@ -170,7 +398,7 @@ export default function ReportDetailsPage() {
                         </div>
                         <div style={{ fontSize: '15px', color: '#1e293b' }}>
                             <span style={{color: '#64748b'}}>Report ID: </span> 
-                            <span style={{fontWeight: 600}}>{report.reportId}</span>
+                            <span style={{fontWeight: 600}}>{report._id ? report._id.substring(report._id.length - 6).toUpperCase() : 'N/A'}</span>
                         </div>
                     </div>
 
@@ -179,12 +407,12 @@ export default function ReportDetailsPage() {
                          <div style={{ fontSize: '15px', color: '#1e293b' }}>
                             <span style={{color: '#64748b'}}>Due Amount: </span> 
                             <span style={{
-                                background: report.bill?.dueAmount > 0 ? '#ef4444' : '#4caf50', 
+                                background: report.bill?.dueAmount > 0 ? '#ef4444' : '#22c55e', 
                                 color: 'white', 
                                 padding: '2px 8px', 
                                 borderRadius: '4px',
                                 fontWeight: 600
-                            }}>₹{report.bill?.dueAmount}</span>
+                            }}>₹{report.bill?.dueAmount ?? 0}</span>
                         </div>
 
                         {/* Status Dropdown */}
@@ -198,7 +426,7 @@ export default function ReportDetailsPage() {
                                     padding: '10px', 
                                     background: '#f1f5f9', 
                                     border: 'none', 
-                                    borderRadius: '6px',
+                                    borderRadius: '6px', 
                                     fontWeight: 600, 
                                     color: '#334155',
                                     cursor: 'pointer'
@@ -219,93 +447,270 @@ export default function ReportDetailsPage() {
                 <div style={{marginBottom: '30px'}}>
                      <table style={{width: '100%', borderCollapse: 'collapse'}}>
                         <thead>
-                            <tr style={{ textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 700 }}>
+                            <tr style={{ textAlign: 'left', fontSize: '13px', color: '#1e293b', fontWeight: 700, borderBottom: '2px solid #e2e8f0' }}>
                                 <th style={{padding: '10px 5px', width: '30%'}}>Test Name</th>
-                                <th style={{padding: '10px 5px', width: '30%'}}>Result</th>
+                                <th style={{padding: '10px 5px', width: '20%'}}>Result</th>
                                 <th style={{padding: '10px 5px', width: '25%'}}>Ref Range</th>
-                                <th style={{padding: '10px 5px', width: '15%'}}>Unit</th>
+                                <th style={{padding: '10px 5px', width: '10%'}}>Unit</th>
+                                <th style={{padding: '10px 5px', width: '15%'}}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {report.results.map((result, idx) => (
-                                <tr key={idx} style={{borderBottom: '1px solid #f1f5f9'}}>
-                                    <td style={{padding: '15px 5px', verticalAlign: 'middle'}}>
-                                        <div style={{fontWeight: 500, color: '#334155'}}>{result.testName}</div>
-                                    </td>
-                                    
-                                    <td style={{padding: '15px 5px'}}>
-                                        <input 
-                                            value={result.resultValue || ''}
-                                            onChange={(e) => handleResultChange(idx, 'resultValue', e.target.value)}
-                                            placeholder="Enter Value"
-                                            style={{
-                                                width: '100%',
-                                                padding: '8px',
-                                                border: '1px solid #cbd5e1',
-                                                borderRadius: '6px',
-                                                outline: 'none'
-                                            }}
-                                        />
-                                    </td>
-                                    
-                                    <td style={{padding: '15px 5px'}}>
-                                        <input 
-                                            value={result.referenceRange || ''}
-                                            onChange={(e) => handleResultChange(idx, 'referenceRange', e.target.value)}
-                                            placeholder="Range"
-                                            style={{
-                                                width: '100%',
-                                                padding: '8px',
-                                                border: '1px solid #cbd5e1',
-                                                borderRadius: '6px',
-                                                outline: 'none',
-                                                background: '#f8fafc'
-                                            }}
-                                        />
-                                    </td>
-                                    
-                                    <td style={{padding: '15px 5px'}}>
-                                         <input 
-                                            value={result.unit || ''}
-                                            onChange={(e) => handleResultChange(idx, 'unit', e.target.value)}
-                                            placeholder="Unit"
-                                            style={{
-                                                width: '100%',
-                                                padding: '8px',
-                                                border: '1px solid #cbd5e1',
-                                                borderRadius: '6px',
-                                                outline: 'none',
-                                                 background: '#f8fafc'
-                                            }}
-                                        />
-                                    </td>
-                                    
-                                     <td style={{padding: '15px 5px'}}>
-                                    </td>
-                                </tr>
+                            {Object.entries(groupedResults).map(([deptName, group]) => (
+                                <Fragment key={deptName}>
+                                    {/* Department Header */}
+                                    <tr style={{ background: '#e2e8f0' }}>
+                                        <td colSpan={5} style={{ padding: '8px 10px', fontWeight: 700, fontSize: '13px', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
+                                            {deptName}
+                                        </td>
+                                    </tr>
+
+                                    {/* Test Rows */}
+                                    {group.map(({ result, originalIndex }) => {
+                                        const isEditing = editingRows[originalIndex];
+                                        const editValues = tempEdits[originalIndex] || result;
+                                        
+                                        // Fallback Logic for Unit and Ref Range
+                                        // @ts-ignore
+                                        const testDef = typeof result.testId === 'object' ? result.testId : null;
+                                        const displayUnit = result.unit || testDef?.unit;
+                                        const method = result.method || testDef?.method;
+                                        const isDescriptive = testDef?.type === 'descriptive';
+                                        
+                                        let displayRefRange = result.referenceRange;
+                                        if (!displayRefRange && testDef?.referenceRanges && testDef.referenceRanges.length > 0) {
+                                            displayRefRange = formatReferenceRanges(testDef.referenceRanges);
+                                        }
+
+                                        return (
+                                            <tr key={originalIndex} style={{borderBottom: '1px solid #f1f5f9'}}>
+                                                <td style={{padding: '15px 5px', verticalAlign: 'middle'}}>
+                                                    <div style={{fontWeight: 600, color: '#334155'}}>{result.testName}</div>
+                                                    {method && <div style={{fontSize:'11px', color:'#94a3b8', marginTop:'2px'}}>{method}</div>}
+                                                </td>
+                                                
+                                                <td style={{padding: '15px 5px'}}>
+                                                    {isDescriptive ? null : (
+                                                        isEditing ? (
+                                                            <input 
+                                                                value={editValues.resultValue || ''}
+                                                                onChange={(e) => handleResultChange(originalIndex, 'resultValue', e.target.value)}
+                                                                placeholder="Enter Value"
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '8px',
+                                                                    border: '1px solid #3b82f6',
+                                                                    borderRadius: '4px',
+                                                                    outline: 'none',
+                                                                    fontWeight: 600
+                                                                }}
+                                                                autoFocus
+                                                            />
+                                                        ) : (
+                                                            <span style={{ fontWeight: 600, color: '#334155' }}>
+                                                                {result.resultValue || <span style={{color:'#cbd5e1', fontWeight: 400}}>Empty</span>}
+                                                            </span>
+                                                        )
+                                                    )}
+                                                </td>
+                                                
+                                                <td style={{padding: '15px 5px'}}>
+                                                    {!isDescriptive && (
+                                                        <div style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}>
+                                                            {displayRefRange}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                
+                                                <td style={{padding: '15px 5px'}}>
+                                                     {!isDescriptive && (
+                                                        <div style={{ fontSize: '13px', color: '#64748b' }}>
+                                                            {displayUnit}
+                                                        </div>
+                                                     )}
+                                                </td>
+                                                
+                                                <td style={{padding: '15px 5px'}}>
+                                                    <div style={{display: 'flex', gap: '8px', alignItems:'center'}}>
+                                                        {!isDescriptive && (
+                                                            isEditing ? (
+                                                                <>
+                                                                    <button 
+                                                                        onClick={() => saveRow(originalIndex)}
+                                                                        disabled={saving}
+                                                                        style={{
+                                                                            background: '#22c55e',
+                                                                            color: 'white',
+                                                                            padding: '6px 10px',
+                                                                            border: 'none',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 600,
+                                                                            cursor: 'pointer',
+                                                                            fontSize: '11px',
+                                                                            opacity: saving ? 0.7 : 1
+                                                                        }}
+                                                                    >
+                                                                        SAVE
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => cancelEdit(originalIndex)}
+                                                                        style={{
+                                                                            background: '#ef4444',
+                                                                            color: 'white',
+                                                                            padding: '6px 10px',
+                                                                            border: 'none',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 600,
+                                                                            cursor: 'pointer',
+                                                                            fontSize: '11px'
+                                                                        }}
+                                                                    >
+                                                                        CANCEL
+                                                                    </button>
+                                                                </>
+                                                            ) : (
+                                                                <button 
+                                                                    onClick={() => toggleEdit(originalIndex)}
+                                                                    style={{
+                                                                        background: '#e2e8f0',
+                                                                        color: '#475569',
+                                                                        padding: '6px 10px',
+                                                                        border: 'none',
+                                                                        borderRadius: '4px',
+                                                                        fontWeight: 600,
+                                                                        cursor: 'pointer',
+                                                                        fontSize: '11px'
+                                                                    }}
+                                                                >
+                                                                    EDIT
+                                                                </button>
+                                                            )
+                                                        )}
+
+                                                        {(testDef?.interpretation || isDescriptive) && !isEditing && (
+                                                            <button 
+                                                                onClick={() => openInterpModal(originalIndex, testDef?.interpretation || '')}
+                                                                style={{
+                                                                    background: '#fff7ed', 
+                                                                    color: '#ea580c', 
+                                                                    padding: '6px 10px', 
+                                                                    border: '1px solid #ffedd5', 
+                                                                    borderRadius: '4px', 
+                                                                    fontWeight: 600, 
+                                                                    cursor: 'pointer', 
+                                                                    fontSize: '11px'
+                                                                }}
+                                                            >
+                                                                EDIT INTERP
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </Fragment>
                             ))}
                         </tbody>
                      </table>
                      
-                     <div style={{marginTop: '20px', textAlign: 'right'}}>
-                        <button 
-                            onClick={saveResults}
-                            disabled={saving}
-                            style={{
-                                background: '#3b82f6',
-                                color: 'white',
-                                padding: '10px 25px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                opacity: saving ? 0.7 : 1
-                            }}
-                        >
-                            {saving ? 'Saving...' : 'Save Results'}
-                        </button>
-                     </div>
                 </div>
+
+                {/* Impression UI */}
+                <div style={{ marginBottom: '30px' }}>
+                    {/* Display Existing Impression if not editing */}
+                    {!showImpressionInput && report.impression && (
+                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '10px' }}>
+                            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, marginBottom: '5px' }}>IMPRESSION:</div>
+                            <div style={{ fontSize: '14px', color: '#334155', whiteSpace: 'pre-wrap' }}>{report.impression}</div>
+                        </div>
+                    )}
+
+                    {!showImpressionInput ? (
+                        <button 
+                            onClick={openImpressionInput}
+                            style={{
+                                background: 'white',
+                                border: '1px dashed #3b82f6',
+                                color: '#3b82f6',
+                                padding: '10px',
+                                width: '100%',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '13px',
+                                transition: 'background 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.background = '#eff6ff'}
+                            onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                        >
+                            {report.impression ? '+ EDIT IMPRESSION' : '+ ADD IMPRESSION'}
+                        </button>
+                    ) : (
+                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                             <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#334155' }}>Add Impression</h4>
+                             <textarea 
+                                value={tempImpression}
+                                onChange={(e) => setTempImpression(e.target.value)}
+                                placeholder="Type your impression here..."
+                                style={{
+                                    width: '100%',
+                                    minHeight: '80px',
+                                    padding: '10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #cbd5e1',
+                                    fontSize: '14px',
+                                    marginBottom: '10px'
+                                }}
+                             />
+                             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                 <button 
+                                    onClick={handleCancelImpression}
+                                    style={{
+                                        border: '1px solid #cbd5e1',
+                                        background: 'white',
+                                        color: '#64748b',
+                                        padding: '6px 12px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontWeight: 600,
+                                        fontSize: '12px'
+                                    }}
+                                 >
+                                    CANCEL
+                                 </button>
+                                 <button 
+                                    onClick={handleSaveImpression}
+                                    style={{
+                                        border: 'none',
+                                        background: '#22c55e',
+                                        color: 'white',
+                                        padding: '6px 12px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontWeight: 600,
+                                        fontSize: '12px'
+                                    }}
+                                 >
+                                    SAVE
+                                 </button>
+                             </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Action Buttons Row */}
+                 <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+                    <button onClick={() => handlePrint()} style={actionBtnStyle('#1565c0')}>PRINT</button>
+                    <button style={actionBtnStyle('#1565c0')}>CUSTOM PRINT</button>
+                    <button onClick={() => setShowPrintSettings(true)} style={actionBtnStyle('#1565c0')}>PRINT SETTINGS</button>
+                    <button style={actionBtnStyle('#1565c0')}>SEND</button>
+                    <Link href={`/bills/${report?.bill?._id}`}>
+                        <button style={actionBtnStyle('#1565c0')}>VIEW BILL</button>
+                    </Link>
+                    <button style={actionBtnStyle('#2e7d32')}>VIDEO TUTORIAL</button>
+                    <button style={actionBtnStyle('#1565c0')}>MORE ACTIONS</button>
+                 </div>
 
             </div>
 
@@ -325,34 +730,57 @@ export default function ReportDetailsPage() {
                  }}>
                     Go to Reports List
                  </Link>
-
-                 {/* Action Buttons Row */}
-                 <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                    <button style={actionBtnStyle('#2e7d32')}>EDIT</button>
-                    <button style={actionBtnStyle('#1565c0')}>PRINT</button>
-                    <button style={actionBtnStyle('#1565c0')}>CUSTOM PRINT</button>
-                    <button style={actionBtnStyle('#1565c0')}>PRINT SETTINGS</button>
-                    <button style={actionBtnStyle('#1565c0')}>SEND</button>
-                    <Link href={`/bills/${report?.bill?._id}`}>
-                        <button style={actionBtnStyle('#1565c0')}>VIEW BILL</button>
-                    </Link>
-                    <button style={actionBtnStyle('#2e7d32')}>VIDEO TUTORIAL</button>
-                    <button style={actionBtnStyle('#1565c0')}>MORE ACTIONS</button>
-                 </div>
              </div>
+             
+             {/* Interpretation Modal */}
+             {showInterpModal && (
+                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+                     <div style={{ background: 'white', padding: '20px', borderRadius: '8px', width: '800px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
+                         <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: 700 }}>Test Interpretation</h3>
+                         
+                         <RichTextEditor 
+                             content={currentInterp.text} 
+                             onChange={(content) => setCurrentInterp(prev => ({ ...prev, text: content }))}
+                         />
+
+                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                             <button onClick={() => setShowInterpModal(false)} style={{ padding: '8px 16px', background: '#e2e8f0', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>CANCEL</button>
+                             <button onClick={saveInterp} style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>SAVE</button>
+                         </div>
+                     </div>
+                 </div>
+             )}
+
+             
+            {/* Print Settings Modal */}
+            {showPrintSettings && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
+                    <div style={{ background: 'white', padding: '24px', borderRadius: '8px', width: '400px' }}>
+                        <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 700 }}>Print Settings</h3>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '8px' }}>Watermark Text</label>
+                            <input 
+                                type="text" 
+                                value={watermarkText} 
+                                onChange={(e) => setWatermarkText(e.target.value)}
+                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                            />
+                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Clear text to remove watermark</div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <button onClick={() => setShowPrintSettings(false)} style={{ padding: '8px 16px', background: '#e2e8f0', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>CLOSE</button>
+                            <button onClick={() => { setShowPrintSettings(false); handlePrint(); }} style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>SAVE & PRINT</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Hidden Print Component */}
+            <div style={{ display: 'none' }}>
+                {report && <ReportPrint ref={printRef} report={{...report, watermarkText}} />}
+            </div>
         </div>
     );
 }
-
-const actionBtnStyle = (bgColor: string) => ({
-    background: bgColor,
-    color: 'white',
-    padding: '10px 20px',
-    border: 'none',
-    borderRadius: '4px',
-    fontWeight: 700,
-    fontSize: '13px',
-    cursor: 'pointer',
-    textTransform: 'uppercase' as const,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-});

@@ -28,8 +28,7 @@ export interface ITest extends Document {
         max?: string;
     }[];
 
-    // Descriptive Test Fields
-    template?: string;
+
 
     // Group Test Fields
     subTests?: mongoose.Types.ObjectId[];

@@ -45,8 +45,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
     // Interpretation Content
     const [interpretation, setInterpretation] = useState('');
 
-    // Descriptive Test Specifics
-    const [template, setTemplate] = useState('');
+
 
     useEffect(() => {
         // Optional: Fetch department name for display
@@ -114,7 +113,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                 payload.interpretation = interpretation;
                 payload.referenceRanges = referenceRanges;
             } else if (testType === 'descriptive') {
-                payload.template = template;
+                payload.interpretation = interpretation;
             } 
             // Group type has no extra fields on creation anymore, subtests added in View page
 
@@ -390,10 +389,12 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
 
             {testType === 'descriptive' && (
                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>Default Lab Result Template</label>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>
+                        {testType === 'descriptive' ? 'Default Content / Template' : 'Interpretation'}
+                    </label>
                     <RichTextEditor 
-                        content={template} 
-                        onChange={(html) => setTemplate(html)} 
+                        content={interpretation} 
+                        onChange={(html) => setInterpretation(html)} 
                     />
                  </div>
             )}

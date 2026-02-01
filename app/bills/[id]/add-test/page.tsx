@@ -43,11 +43,14 @@ export default function AddTestPage() {
     const [testSearch, setTestSearch] = useState('');
     const [availableTests, setAvailableTests] = useState<Test[]>([]);
     const [selectedTests, setSelectedTests] = useState<Test[]>([]);
+    const [initialTestIds, setInitialTestIds] = useState<Set<string>>(new Set());
 
     // Financials State
     const [discount, setDiscount] = useState(0);
     const [discountType, setDiscountType] = useState<'AMOUNT' | 'PERCENTAGE'>('AMOUNT');
-    const [paidAmount, setPaidAmount] = useState(0); // This represents TOTAL paid amount, or incremental? Usually user just wants to update payment.
+    const [existingPaidAmount, setExistingPaidAmount] = useState(0); 
+    const [additionalPayment, setAdditionalPayment] = useState(0);
+    const [paymentType, setPaymentType] = useState('CASH');
     // For simplicity, we will load existing paidAmount. User can increase it if they pay more now.
 
     useEffect(() => {
@@ -79,7 +82,13 @@ export default function AddTestPage() {
                 // Set financials
                 setDiscount(b.discountAmount); 
                 setDiscountType(b.discountType || 'AMOUNT');
-                setPaidAmount(b.paidAmount);
+                setExistingPaidAmount(b.paidAmount);
+                
+                // Track initial tests
+                if (Array.isArray(b.tests)) {
+                    const ids = new Set<string>(b.tests.filter((t: any) => t.test).map((t: any) => t.test._id));
+                    setInitialTestIds(ids);
+                }
 
             } else {
                 toast.error('Failed to load bill');
@@ -113,6 +122,11 @@ export default function AddTestPage() {
 
     const handleTestToggle = (t: Test) => {
         if (selectedTests.find(st => st._id === t._id)) {
+            // Check if it's an initial test
+            if (initialTestIds.has(t._id)) {
+                toast.error('Cannot remove existing tests from this screen.');
+                return;
+            }
             setSelectedTests(selectedTests.filter(st => st._id !== t._id));
         } else {
             setSelectedTests([...selectedTests, t]);
@@ -131,7 +145,9 @@ export default function AddTestPage() {
     };
 
     const calculateFinalAmount = () => {
-        return Math.max(0, calculateTotal() - calculateDiscountAmount() - paidAmount);
+        const totalPaid = existingPaidAmount + additionalPayment;
+        // Ensure due amount doesn't go negative visually, though logically it might mean refund
+        return Math.max(0, calculateTotal() - calculateDiscountAmount() - totalPaid);
     };
 
     const handleSubmit = async () => {
@@ -140,18 +156,28 @@ export default function AddTestPage() {
         try {
             const totalAmount = calculateTotal();
             const discountAmt = calculateDiscountAmount(); // This is the calculated value in currency
-            const dueAmt = Math.max(0, totalAmount - discountAmt - paidAmount);
+            const totalPaid = existingPaidAmount + additionalPayment;
+            
+            // Validation: Prevent overpayment
+            if (totalPaid > (totalAmount - discountAmt)) {
+                toast.error('Total paid amount cannot exceed the bill amount');
+                setSubmitting(false);
+                return;
+            }
+
+            const dueAmt = Math.max(0, totalAmount - discountAmt - totalPaid);
 
             const payload = {
                 tests: selectedTests.map(t => ({ test: t._id, price: t.price })),
                 totalAmount,
                 discountAmount: discountAmt,
-                paidAmount,
+                paidAmount: totalPaid,
                 dueAmount: dueAmt,
                 discountType,
                 // If paid changed, we update status check
                 status: dueAmt > 0 ? 'PARTIAL' : 'PAID', // Simple logic. If 0 due, match PAID.
-                paymentType: bill.paymentType // Keep existing payment type or add UI to change it? Assuming keep.
+                paymentType: bill.paymentType, // Keep initial payment type
+                duePaymentType: paymentType // Capture new payment type for the additional amount
             };
 
             const res = await fetch(`/api/v1/bills/${id}`, {
@@ -188,7 +214,7 @@ export default function AddTestPage() {
                     <Link href={`/bills/${id}`} style={{ marginRight: '15px', color: '#64748b', textDecoration: 'none' }}>
                         <i className="fa fa-arrow-left"></i> Back
                     </Link>
-                    <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Add Tests / Modify Bill</h1>
+
                 </div>
 
                 <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
@@ -225,6 +251,7 @@ export default function AddTestPage() {
                                         borderBottom: '1px solid #f1f5f9', 
                                         cursor: 'pointer', 
                                         background: selectedTests.find(st => st._id === t._id) ? '#eff6ff' : 'white',
+                                        opacity: initialTestIds.has(t._id) ? 0.6 : 1,
                                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                         borderRadius: '6px',
                                         marginBottom: '5px'
@@ -256,7 +283,11 @@ export default function AddTestPage() {
                                     <span style={{flex: 1}}>{t.name}</span>
                                     <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
                                         <span style={{fontWeight: 600}}>₹{t.price}</span>
-                                        <i onClick={() => handleTestToggle(t)} className="fa fa-times" style={{color:'#ef4444', cursor:'pointer'}}></i>
+                                        {initialTestIds.has(t._id) ? (
+                                            <i className="fa fa-lock" style={{color:'#94a3b8', marginLeft: '5px'}} title="Existing Test"></i>
+                                        ) : (
+                                            <i onClick={() => handleTestToggle(t)} className="fa fa-times" style={{color:'#ef4444', cursor:'pointer'}}></i>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -290,14 +321,32 @@ export default function AddTestPage() {
                             </div>
                             
                             <div className="summary-row" style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center'}}>
-                                <span>Total Paid</span>
-                                <input 
-                                    type="number" 
-                                    value={paidAmount} 
-                                    onChange={(e) => setPaidAmount(Number(e.target.value))}
-                                    style={{width:'100px', padding:'4px', border:'1px solid #cbd5e1', borderRadius:'4px', textAlign:'right'}}
-                                />
+                                <span>Existing Paid</span>
+                                <span>₹{existingPaidAmount}</span>
                             </div>
+
+                            <div className="summary-row" style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center'}}>
+                                <span style={{color: '#3b82f6', fontWeight: 600}}>+ Payment</span>
+                                <div style={{display:'flex', gap:'5px'}}>
+                                    <input 
+                                        type="number" 
+                                        value={additionalPayment} 
+                                        onChange={(e) => setAdditionalPayment(Number(e.target.value))}
+                                        min="0"
+                                        style={{width:'80px', padding:'4px', border:'1px solid #3b82f6', borderRadius:'4px', textAlign:'right'}}
+                                    />
+                                    <select
+                                        value={paymentType}
+                                        onChange={(e) => setPaymentType(e.target.value)}
+                                        style={{padding:'4px', border:'1px solid #cbd5e1', borderRadius:'4px', fontSize:'12px'}}
+                                    >
+                                        <option value="CASH">CASH</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="CARD">CARD</option>
+                                    </select>
+                                </div>
+                            </div>
+
 
                              <div className="summary-row" style={{display:'flex', justifyContent:'space-between', marginTop:'15px', fontWeight: 700, fontSize:'16px', color:'#1e293b'}}>
                                 <span>Due Amount</span>

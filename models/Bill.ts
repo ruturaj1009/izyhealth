@@ -22,6 +22,11 @@ const BillSchema = new Schema<IBill>({
         default: PaymentType.CASH
     },
 
+    duePaymentType: {
+        type: String,
+        enum: Object.values(PaymentType),
+    },
+
     discountType: {
         type: String,
         enum: ['AMOUNT', 'PERCENTAGE'],

@@ -27,8 +27,7 @@ interface Test {
     formula?: string;
     referenceRanges?: ReferenceRange[];
     interpretation?: string;
-    // Descriptive
-    template?: string;
+    // Descriptive - usage merged into interpretation
     // Group
     subTests?: Test[];
 }
@@ -507,10 +506,10 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
 
             {test.type === 'descriptive' && (
                 <div>
-                     <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1e293b', marginBottom: '15px' }}>Report Template</h2>
+                     <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1e293b', marginBottom: '15px' }}>Default Content / Template</h2>
                      <div 
                         style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px', minHeight: '200px', background: '#fcfcfc' }}
-                        dangerouslySetInnerHTML={{ __html: test.template || '<span style="color: #94a3b8">No template defined.</span>' }}
+                        dangerouslySetInnerHTML={{ __html: test.interpretation || (test as any).template || '<span style="color: #94a3b8">No content defined.</span>' }}
                      />
                      <style jsx global>{`
                         table { border-collapse: collapse; width: 100%; }

@@ -16,14 +16,14 @@ const ReportSchema = new Schema<IReport>({
     bill: { type: Schema.Types.ObjectId, ref: 'Bill', required: true },
     patient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    reportId: { type: String, required: true, unique: true },
     date: { type: Date, default: Date.now },
     status: {
         type: String,
         enum: Object.values(ReportStatus),
         default: ReportStatus.INITIAL
     },
-    results: [ResultSchema]
+    results: [ResultSchema],
+    impression: { type: String }
 }, { timestamps: true });
 
 export default models.Report || model<IReport>('Report', ReportSchema);

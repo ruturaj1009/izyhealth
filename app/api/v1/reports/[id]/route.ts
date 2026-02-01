@@ -4,6 +4,8 @@ import dbConnect from '@/lib/db';
 import Report from '@/models/Report';
 import Bill from '@/models/Bill';
 import { User } from '@/models/User';
+import '@/models/Test'; // Register Test model for population
+import '@/models/Department'; // Register Department model for population
 
 // GET: Fetch Report Details
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -14,7 +16,15 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         const report = await Report.findById(id)
             .populate('patient', 'firstName lastName phone age gender')
             .populate('doctor', 'firstName lastName title')
-            .populate('bill'); // We might need bill details
+            .populate('bill')
+            .populate({
+                path: 'results.testId',
+                select: 'name type department unit referenceRanges interpretation method',
+                populate: {
+                    path: 'department',
+                    select: 'name'
+                }
+            });
 
         if (!report) {
             return NextResponse.json({ status: 404, error: 'Report not found' }, { status: 404 });
@@ -36,7 +46,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
     try {
         const body = await request.json();
-        const { status, results, patientId, doctorId } = body;
+        const { status, results, patientId, doctorId, impression } = body;
+        console.log(`[PUT Report] ID: ${id}, Payload:`, body);
 
         const report = await Report.findById(id);
         if (!report) {
@@ -46,6 +57,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         // 1. Update Basic Fields
         if (status) report.status = status;
         if (results) report.results = results; // Full array replacement or merge? Assuming full replacement/merge from UI state
+        if (impression !== undefined) report.impression = impression;
 
         // 2. Handle Patient/Doctor Re-assignment (Sync with Bill)
         let billUpdates: any = {};
@@ -71,7 +83,16 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         // Return updated report
         const updatedReport = await Report.findById(id)
             .populate('patient', 'firstName lastName phone age gender')
-            .populate('doctor', 'firstName lastName title');
+            .populate('doctor', 'firstName lastName title')
+            .populate('bill')
+            .populate({
+                path: 'results.testId',
+                select: 'name type department unit referenceRanges interpretation method',
+                populate: {
+                    path: 'department',
+                    select: 'name'
+                }
+            });
 
         return NextResponse.json({
             status: 200,
@@ -80,7 +101,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         });
 
     } catch (error) {
-        console.error("Report Update Error:", error);
+        console.error("Report Update Error Detailed:", error);
         return NextResponse.json({ status: 500, error: (error as Error).message }, { status: 500 });
     }
 }

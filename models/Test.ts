@@ -42,8 +42,7 @@ const TestSchema = new Schema<ITest>({
         }
     },
 
-    // Descriptive Test Specifics
-    template: { type: String }, // HTML content from rich text editor
+
 
     // Group Test Specifics
     subTests: [{ type: Schema.Types.ObjectId, ref: 'Test' }],
