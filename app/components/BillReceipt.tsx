@@ -69,7 +69,7 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
                 pointerEvents: 'none',
                 zIndex: 0
             }}>
-                Health Amaze Demo Account
+                IzyHealth By Rutu Dev Labs
             </div>
             )}
 

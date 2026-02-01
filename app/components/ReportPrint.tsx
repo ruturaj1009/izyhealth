@@ -64,7 +64,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%) rotate(-45deg)',
                                 fontSize: '60px', color: 'rgba(0, 0, 0, 0.05)', pointerEvents: 'none', whiteSpace: 'nowrap', fontWeight: 'bold', zIndex: 0
                             }}>
-                                {report.watermarkText || 'Health Amaze Demo Account'}
+                                {report.watermarkText || 'IzyHealth By Rutu Dev Labs'}
                             </div>
                         )}
 
