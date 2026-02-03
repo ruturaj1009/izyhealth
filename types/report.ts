@@ -16,6 +16,7 @@ export interface ITestResult {
 }
 
 export interface IReport extends Document {
+    orgid: number;
     bill: mongoose.Types.ObjectId | IBill;
     patient: mongoose.Types.ObjectId | IUser;
     doctor: mongoose.Types.ObjectId | IUser;

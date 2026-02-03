@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { api } from '@/lib/api-client';
 import styles from './page.module.css';
 
 interface Department {
@@ -32,8 +33,7 @@ export default function TestsPage() {
 
     const fetchDepartments = async () => {
         try {
-            const res = await fetch('/api/v1/departments');
-            const data = await res.json();
+            const data = await api.get('/api/v1/departments');
             if (data.success) {
                 setDepartments(data.data);
             }
@@ -72,15 +72,13 @@ export default function TestsPage() {
             const url = isEditing 
                 ? `/api/v1/departments/${currentId}` 
                 : '/api/v1/departments';
-            const method = isEditing ? 'PUT' : 'POST';
-
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: formName, icon: formIcon }),
-            });
             
-            const data = await res.json();
+            let data;
+            if (isEditing) {
+                data = await api.put(url, { name: formName, icon: formIcon });
+            } else {
+                data = await api.post(url, { name: formName, icon: formIcon });
+            }
             
             if (data.success) {
                 if (isEditing) {
@@ -94,9 +92,10 @@ export default function TestsPage() {
             } else {
                 toast.error(data.error || 'Failed to save department');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save department', error);
-            toast.error('An error occurred while saving');
+            const msg = error.message || 'An error occurred while saving';
+            toast.error(msg);
         } finally {
             setSubmitting(false);
         }
@@ -128,19 +127,16 @@ export default function TestsPage() {
                         onClick={async () => {
                             toast.dismiss(t.id);
                             try {
-                                const res = await fetch(`/api/v1/departments/${id}`, {
-                                    method: 'DELETE',
-                                });
-                                const data = await res.json();
+                                const data = await api.delete(`/api/v1/departments/${id}`);
                                 if (data.success) {
                                     setDepartments(prev => prev.filter(d => d._id !== id));
                                     toast.success('Department deleted successfully');
                                 } else {
                                     toast.error(data.error || 'Failed to delete');
                                 }
-                            } catch (error) {
+                            } catch (error: any) {
                                 console.error('Failed to delete department', error);
-                                toast.error('An error occurred while deleting');
+                                toast.error(error.message || 'An error occurred while deleting');
                             }
                         }}
                         style={{

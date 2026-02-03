@@ -3,6 +3,7 @@ import { IBill } from '@/types/bill';
 import { PaymentType, BillStatus } from '@/enums/bill';
 
 const BillSchema = new Schema<IBill>({
+    orgid: { type: Number, required: true },
     patient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 

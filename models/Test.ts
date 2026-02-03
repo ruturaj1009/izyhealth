@@ -9,6 +9,7 @@ const ReferenceRangeSchema = new Schema({
 
 
 const TestSchema = new Schema<ITest>({
+    orgid: { type: Number, required: true },
     name: { type: String, required: [true, 'Test name is required'] },
     type: {
         type: String,

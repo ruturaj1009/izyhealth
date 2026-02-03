@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Test from '@/models/Test';
 import { Department } from '@/models/Department'; // Ensure Department is registered
+import { authorize } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
     await dbConnect();
     try {
+        const user = await authorize(req);
+
         const body = await req.json();
+
+        // Enforce orgid from token
+        body.orgid = user.orgid;
 
         // Basic Validation
         if (!body.name) {
@@ -21,40 +27,38 @@ export async function POST(req: NextRequest) {
             body.parentGroup = body.groupId; // Set parentGroup on creation
             const test = await Test.create(body);
 
-            await Test.findByIdAndUpdate(body.groupId, {
-                $addToSet: { subTests: test._id }
-            });
+            // Verify group belongs to same org (security check)
+            await Test.findOneAndUpdate(
+                { _id: body.groupId, orgid: user.orgid },
+                { $addToSet: { subTests: test._id } }
+            );
             return NextResponse.json({ success: true, data: test }, { status: 201 });
         }
 
         const test = await Test.create(body);
         return NextResponse.json({ success: true, data: test }, { status: 201 });
     } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        // Different status for Auth errors vs Server errors could be cleaner, but using 500/401 based on message or generic
+        const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
+        return NextResponse.json({ success: false, error: error.message }, { status: status });
     }
 }
 
 export async function GET(req: NextRequest) {
     await dbConnect();
-    // Force registration
     console.log("Department Model Registered:", !!Department);
     try {
+        const user = await authorize(req);
+
         const { searchParams } = new URL(req.url);
         const type = searchParams.get('type');
         const search = searchParams.get('search');
         const department = searchParams.get('department');
 
-        let query: any = {};
+        let query: any = { orgid: user.orgid }; // Scoped to Org
+
         if (type) query.type = type;
         if (department) query.department = department; // Filter by department
-
-        // Hide subtests from the main list (unless they are orphans or main tests)
-        // Check if query should include subtests? For now, user requested to hide them.
-        // If we need them for selection, we might need a flag.
-        // Assuming "Select Tests" modal still works because it might filter by nothing or just department?
-        // Wait, if we hide them here, the "Select Tests" modal won't find them if it uses this API?
-        // The user said "newly created subtests only display under the parent test".
-        // Let's add a flag `includeSubtests`
 
         const includeSubtests = searchParams.get('includeSubtests');
 
@@ -70,6 +74,8 @@ export async function GET(req: NextRequest) {
         const tests = await Test.find(query).sort({ createdAt: -1 }).populate('department');
         return NextResponse.json({ success: true, data: tests });
     } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
+        return NextResponse.json({ success: false, error: error.message }, { status: status });
     }
 }
+

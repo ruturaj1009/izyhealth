@@ -88,3 +88,71 @@
         display: none; /* Hide search on mobile for simplicity or convert to icon */
     }
 }
+
+.profileWrapper {
+    position: relative;
+    cursor: pointer;
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: 120%; /* Below the icon */
+    right: 0;
+    width: 200px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 8px 0;
+    z-index: 1001;
+    color: #1a1a1a;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.menuHeader {
+    padding: 8px 16px;
+}
+
+.menuName {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin: 0;
+    color: #111;
+}
+
+.menuEmail {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.menuDivider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0;
+}
+
+.menuItem {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    color: #ef4444; /* Red for logout */
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.menuItem:hover {
+    background: #f3f4f6;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -9,6 +9,7 @@ export enum UserRole {
 }
 
 export interface IUser extends Document {
+    orgid: number;
     title: string;
     firstName: string;
     lastName: string;

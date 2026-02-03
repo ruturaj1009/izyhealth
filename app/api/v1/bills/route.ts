@@ -5,11 +5,13 @@ import { User, Doctor } from '@/models/User';
 import { ApiResponse } from '@/types/api';
 import { UserRole } from '@/types/user';
 import { ReportStatus } from '@/enums/report';
+import { authorize } from '@/lib/auth';
 
 export async function POST(request: Request) {
     await dbConnect();
 
     try {
+        const user = await authorize(request);
         const body = await request.json();
 
         let { patientId, doctorId, tests, paymentType, totalAmount, discountAmount, paidAmount, status } = body;
@@ -28,12 +30,14 @@ export async function POST(request: Request) {
         if (doctorId === 'SELF') {
             let selfDoc = await User.findOne({
                 role: UserRole.DOCTOR,
-                firstName: 'SELF'
+                firstName: 'SELF',
+                orgid: user.orgid // Scoped to Org
             });
 
             if (!selfDoc) {
                 // Create SELF doctor if not exists
                 selfDoc = await Doctor.create({
+                    orgid: user.orgid,
                     title: 'Dr.',
                     firstName: 'SELF',
                     gender: 'Other',
@@ -54,6 +58,7 @@ export async function POST(request: Request) {
         const due = totalAmount - discountAmount - paidAmount;
 
         const bill = await Bill.create({
+            orgid: user.orgid, // Assign orgid
             patient: patientId,
             doctor: doctorId,
             tests,
@@ -63,7 +68,7 @@ export async function POST(request: Request) {
             dueAmount: due,
             paymentType,
             discountType: body.discountType || 'AMOUNT',
-            status: status || (due > 0 ? 'PARTIAL' : 'PAID') // Simple logic, can depend on due
+            status: status || (due > 0 ? 'PARTIAL' : 'PAID')
         });
 
         // Populate to return full data
@@ -115,6 +120,7 @@ export async function POST(request: Request) {
             });
 
             await Report.create({
+                orgid: user.orgid, // Assign orgid
                 bill: bill._id,
                 patient: bill.patient._id,
                 doctor: bill.doctor._id,
@@ -124,7 +130,6 @@ export async function POST(request: Request) {
 
         } catch (reportError) {
             console.error("Failed to auto-create report:", reportError);
-            // Return validation error in response for debugging
             return NextResponse.json({
                 status: 201,
                 data: bill,
@@ -137,54 +142,49 @@ export async function POST(request: Request) {
             data: bill
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Bill Create Error:', error);
+        const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
         return NextResponse.json({
-            status: 500,
+            status: status,
             error: (error as Error).message
-        }, { status: 500 });
+        }, { status: status });
     }
 }
 
 export async function GET(request: Request) {
     await dbConnect();
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
-    const skip = (page - 1) * limit;
-
-    let query: any = {};
-
-    // Search by Bill ID (if search is a valid ObjectId) or Patient Name logic could go here
-    // For now, let's simplistic search if possible or just standard pagination
-    // Since Bill doesn't duplicate patient name, complex search needs aggregation or just searching by ID/Date if stored string.
-    // For MVP, if search looks like a mongoID, search by _id. 
-    // Date Filter
-    const dateParam = searchParams.get('date');
-    if (dateParam) {
-        const startDate = new Date(dateParam);
-        startDate.setHours(0, 0, 0, 0);
-
-        const endDate = new Date(dateParam);
-        endDate.setHours(23, 59, 59, 999);
-
-        query.createdAt = {
-            $gte: startDate,
-            $lte: endDate
-        };
-    }
-
-    if (search) {
-        if (search.match(/^[0-9a-fA-F]{24}$/)) {
-            query._id = search;
-        }
-        // Note: Advanced search by Patient Name requires lookup/aggregation which is heavier. 
-        // We will skip strict name search for now unless requested to keep performance high, 
-        // or we can add a basic population match if needed.
-    }
 
     try {
+        const user = await authorize(request);
+        const { searchParams } = new URL(request.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '10');
+        const search = searchParams.get('search') || '';
+        const skip = (page - 1) * limit;
+
+        let query: any = { orgid: user.orgid }; // Filter by orgid
+
+        const dateParam = searchParams.get('date');
+        if (dateParam) {
+            const startDate = new Date(dateParam);
+            startDate.setHours(0, 0, 0, 0);
+
+            const endDate = new Date(dateParam);
+            endDate.setHours(23, 59, 59, 999);
+
+            query.createdAt = {
+                $gte: startDate,
+                $lte: endDate
+            };
+        }
+
+        if (search) {
+            if (search.match(/^[0-9a-fA-F]{24}$/)) {
+                query._id = search;
+            }
+        }
+
         const total = await Bill.countDocuments(query);
         const bills = await Bill.find(query)
             .populate('patient')
@@ -205,7 +205,8 @@ export async function GET(request: Request) {
                 }
             }
         });
-    } catch (error) {
-        return NextResponse.json({ status: 500, error: (error as Error).message }, { status: 500 });
+    } catch (error: any) {
+        const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
+        return NextResponse.json({ status: status, error: (error as Error).message }, { status: status });
     }
 }

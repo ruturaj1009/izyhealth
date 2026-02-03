@@ -24,6 +24,7 @@ const ResultSchema = new Schema({
 }, { _id: false });
 
 const ReportSchema = new Schema<IReport>({
+    orgid: { type: Number, required: true },
     bill: { type: Schema.Types.ObjectId, ref: 'Bill', required: true },
     patient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },

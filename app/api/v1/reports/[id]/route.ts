@@ -6,6 +6,7 @@ import Bill from '@/models/Bill';
 import { User } from '@/models/User';
 import '@/models/Test'; // Register Test model for population
 import '@/models/Department'; // Register Department model for population
+import { authorize } from '@/lib/auth';
 
 // GET: Fetch Report Details
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -13,7 +14,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params;
 
     try {
-        const report = await Report.findById(id)
+        const user = await authorize(request);
+        const report = await Report.findOne({ _id: id, orgid: user.orgid })
             .populate('patient', 'firstName lastName phone age gender')
             .populate('doctor', 'firstName lastName title')
             .populate('bill')
@@ -34,8 +36,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
             status: 200,
             data: report
         });
-    } catch (error) {
-        return NextResponse.json({ status: 500, error: (error as Error).message }, { status: 500 });
+    } catch (error: any) {
+        const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
+        return NextResponse.json({ status: status, error: (error as Error).message }, { status: status });
     }
 }
 
@@ -45,11 +48,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params;
 
     try {
+        const user = await authorize(request);
         const body = await request.json();
         const { status, results, patientId, doctorId, impression } = body;
-        console.log(`[PUT Report] ID: ${id}, Payload:`, body);
 
-        const report = await Report.findById(id);
+        const report = await Report.findOne({ _id: id, orgid: user.orgid });
         if (!report) {
             return NextResponse.json({ status: 404, error: 'Report not found' }, { status: 404 });
         }
@@ -77,11 +80,12 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
         // 3. Sync to Bill if needed
         if (Object.keys(billUpdates).length > 0) {
-            await Bill.findByIdAndUpdate(report.bill, billUpdates);
+            // Update Bill but Ensure it also belongs to org
+            await Bill.findOneAndUpdate({ _id: report.bill, orgid: user.orgid }, billUpdates);
         }
 
         // Return updated report
-        const updatedReport = await Report.findById(id)
+        const updatedReport = await Report.findOne({ _id: id, orgid: user.orgid })
             .populate('patient', 'firstName lastName phone age gender')
             .populate('doctor', 'firstName lastName title')
             .populate('bill')
@@ -100,8 +104,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             message: 'Report updated successfully'
         });
 
-    } catch (error) {
-        console.error("Report Update Error Detailed:", error);
-        return NextResponse.json({ status: 500, error: (error as Error).message }, { status: 500 });
+    } catch (error: any) {
+        const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
+        return NextResponse.json({ status: status, error: (error as Error).message }, { status: status });
     }
 }

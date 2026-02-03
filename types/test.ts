@@ -9,6 +9,7 @@ import { IDepartment } from '@/models/Department'; // Circular? Department model
 // For now, I'll import from model to avoid break, or just use mongoose.Types.ObjectId since it's a ref.
 
 export interface ITest extends Document {
+    orgid: number;
     name: string;
     type: 'normal' | 'descriptive' | 'group';
     shortCode?: string;

@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 import { useState, useEffect, Fragment, useRef } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import Link from 'next/link';

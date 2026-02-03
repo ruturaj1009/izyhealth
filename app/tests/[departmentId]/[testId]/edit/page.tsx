@@ -3,6 +3,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { api } from '@/lib/api-client';
 import RichTextEditor from '../../../../components/RichTextEditor';
 
 interface Department {
@@ -52,18 +53,16 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
 
     const fetchInitialData = async () => {
         try {
-            const [deptRes, testRes] = await Promise.all([
-                fetch('/api/v1/departments'),
-                fetch(`/api/v1/tests/${testId}`)
+            const [deptData, testData] = await Promise.all([
+                api.get('/api/v1/departments'),
+                api.get(`/api/v1/tests/${testId}`)
             ]);
 
-            const deptData = await deptRes.json();
             if(deptData.success) {
                 const d = deptData.data.find((dept: any) => dept._id === departmentId);
                 if(d) setDepartmentName(d.name);
             }
 
-            const testData = await testRes.json();
             if (testData.success) {
                 const t = testData.data;
                 setName(t.name);
@@ -140,12 +139,7 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
                 payload.interpretation = interpretation;
             } 
             
-            const res = await fetch(`/api/v1/tests/${testId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+            const data = await api.put(`/api/v1/tests/${testId}`, payload);
 
             if (data.success) {
                 toast.success('Test updated successfully!');

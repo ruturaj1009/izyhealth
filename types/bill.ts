@@ -4,6 +4,7 @@ import { ITest } from '@/types/test';
 import { PaymentType, BillStatus } from '@/enums/bill';
 
 export interface IBill extends Document {
+    orgid: number;
     patient: mongoose.Types.ObjectId | IUser;
     doctor: mongoose.Types.ObjectId | IUser; // Can be a "SELF" doctor record
 

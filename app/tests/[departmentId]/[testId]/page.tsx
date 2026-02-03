@@ -3,6 +3,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { api } from '@/lib/api-client';
 
 interface ReferenceRange {
     name: string;
@@ -45,8 +46,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
 
     const fetchTest = async () => {
         try {
-            const res = await fetch(`/api/v1/tests/${testId}`);
-            const data = await res.json();
+            const data = await api.get(`/api/v1/tests/${testId}`);
             if (data.success) {
                 setTest(data.data);
             }
@@ -76,11 +76,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
         setTest({ ...test, subTests: newSubTests });
 
         try {
-            await fetch(`/api/v1/tests/${testId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subTests: newSubTests.map(t => t._id) })
-            });
+            await api.put(`/api/v1/tests/${testId}`, { subTests: newSubTests.map(t => t._id) });
             // Ideally we re-fetch or confirm success, but optimistic is fine for now
         } catch (error) {
             console.error(error);
@@ -117,13 +113,8 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                                 // Filter out the ID
                                 const newSubtestIds = (test?.subTests?.map(t => t._id) || []).filter(id => id !== subtestId);
                                 
-                                const res = await fetch(`/api/v1/tests/${testId}`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ subTests: newSubtestIds })
-                                });
-                    
-                                const data = await res.json();
+                                const data = await api.put(`/api/v1/tests/${testId}`, { subTests: newSubtestIds });
+
                                 if(data.success) {
                                     setTest(data.data);
                                     toast.success('Test removed from group');
@@ -177,8 +168,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                         onClick={async () => {
                             toast.dismiss(t.id);
                             try {
-                                const res = await fetch(`/api/v1/tests/${testId}`, { method: 'DELETE' });
-                                const data = await res.json();
+                                const data = await api.delete(`/api/v1/tests/${testId}`);
                                 if(data.success) {
                                     toast.success('Test deleted');
                                     router.push(`/tests/${departmentId}`);

@@ -3,6 +3,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { api } from '@/lib/api-client';
 
 interface Test {
     _id: string;
@@ -36,15 +37,13 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
 
     const fetchData = async () => {
         try {
-            const testsRes = await fetch(`/api/v1/tests?department=${departmentId}`);
-            const testsData = await testsRes.json();
+            const testsData = await api.get(`/api/v1/tests?department=${departmentId}`);
             
             if (testsData.success) {
                 setTests(testsData.data);
             }
 
-             const deptRes2 = await fetch(`/api/v1/departments`);
-             const deptData = await deptRes2.json();
+             const deptData = await api.get(`/api/v1/departments`);
              if(deptData.success) {
                  const found = deptData.data.find((d: any) => d._id === departmentId);
                  if(found) setDepartment(found);
@@ -82,8 +81,7 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
                         onClick={async () => {
                             toast.dismiss(t.id);
                             try {
-                                const res = await fetch(`/api/v1/tests/${testId}`, { method: 'DELETE' });
-                                const data = await res.json();
+                                const data = await api.delete(`/api/v1/tests/${testId}`);
                                 if(data.success) {
                                     toast.success('Test deleted successfully');
                                     setTests(tests.filter(t => t._id !== testId));

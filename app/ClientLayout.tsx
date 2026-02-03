@@ -1,7 +1,10 @@
 'use client';
 import { useState } from "react";
+import { usePathname } from 'next/navigation';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Sidebar from "./components/Sidebar";
 import TopHeader from "./components/TopHeader";
+import OfflinePage from "./components/OfflinePage";
 
 export default function ClientLayout({
   children,
@@ -18,9 +21,23 @@ export default function ClientLayout({
 
   // Toggle (for click)
   const handleToggle = () => setSidebarOpen(prev => !prev);
+  
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+  if (isAuthPage) {
+      return (
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+            <OfflinePage />
+            {children}
+          </GoogleOAuthProvider>
+      );
+  }
 
   return (
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
     <div style={{display:'flex', height:'100vh', overflow:'hidden'}}>
+      <OfflinePage />
       
       {/* Sidebar: Fixed overlay */}
       <Sidebar 
@@ -56,5 +73,6 @@ export default function ClientLayout({
       )}
 
     </div>
+    </GoogleOAuthProvider>
   );
 }
