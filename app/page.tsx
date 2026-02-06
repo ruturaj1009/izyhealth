@@ -1,9 +1,13 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
+import SettingsModal from './components/SettingsModal';
 import styles from "./dashboard.module.css";
 
 export default function Home() {
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
   return (
     <>
       <section className={styles.hero}>
@@ -77,12 +81,12 @@ export default function Home() {
             <span className={styles.label}>Business Analysis</span>
         </Link>
 
-        <Link href="#" className={styles.card}>
+        <button onClick={() => setShowSettingsModal(true)} className={styles.card} style={{border:'none', background:'transparent', cursor:'pointer'}}>
             <div className={`${styles.iconWrapper} ${styles.iconBlue}`}>
                 <i className="fa fa-gear"></i>
             </div>
             <span className={styles.label}>Settings</span>
-        </Link>
+        </button>
 
         <Link href="#" className={styles.card}>
             <div className={`${styles.iconWrapper} ${styles.iconRed}`}>
@@ -128,6 +132,7 @@ export default function Home() {
 
       </section>
 
+      <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
 
       <Script 
         src="https://www.noupe.com/embed/019c24e615be76c4aaa9459c86b9b02887b3.js" 

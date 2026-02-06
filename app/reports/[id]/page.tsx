@@ -68,6 +68,7 @@ export default function ReportDetailsPage() {
     // Print Settings State
     const [showPrintSettings, setShowPrintSettings] = useState(false);
     const [watermarkText, setWatermarkText] = useState('Health Amaze Demo Account');
+    const [printSettings, setPrintSettings] = useState<any>(null);
 
     // Print Handling
     const printRef = useRef<HTMLDivElement>(null);
@@ -90,8 +91,20 @@ export default function ReportDetailsPage() {
     useEffect(() => {
         if (id) {
             fetchReport(id);
+            fetchPrintSettings();
         }
     }, [id]);
+
+    async function fetchPrintSettings() {
+        try {
+            const data = await api.get('/api/v1/settings/print?type=report');
+            if (data.status === 200) {
+                setPrintSettings(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch print settings:', err);
+        }
+    }
 
     async function fetchReport(id: string) {
         try {
@@ -792,7 +805,7 @@ export default function ReportDetailsPage() {
 
             {/* Hidden Print Component */}
             <div style={{ display: 'none' }}>
-                {report && <ReportPrint ref={printRef} report={{...report, watermarkText}} />}
+                {report && <ReportPrint ref={printRef} report={{...report, watermarkText}} printSettings={printSettings} />}
             </div>
         </div>
     );

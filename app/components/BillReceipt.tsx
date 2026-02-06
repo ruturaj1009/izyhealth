@@ -28,9 +28,21 @@ interface BillReceiptProps {
         createdAt: string;
     };
     showWatermark?: boolean;
+    printSettings?: {
+        headerType?: 'none' | 'text' | 'image';
+        labName?: string;
+        labAddress?: string;
+        headerImageUrl?: string;
+        footerImageUrl?: string;
+        headerMargin?: number;
+        fontSize?: number;
+        showWatermark?: boolean;
+        watermarkText?: string;
+    };
 }
 
-export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({ bill, showWatermark = false }, ref) => {
+
+export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({ bill, showWatermark = false, printSettings }, ref) => {
     
     const formattedDate = new Date(bill.createdAt).toLocaleString('en-IN', {
         day: 'numeric',
@@ -43,6 +55,12 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
 
     const billIdShort = bill._id.substring(bill._id.length - 6).toUpperCase();
     const grandTotal = bill.totalAmount - bill.discountAmount;
+
+    // Determine header type (default to text with hardcoded values if no settings)
+    const headerType = printSettings?.headerType || 'text';
+    const labName = printSettings?.labName || 'Raj Labs';
+    const labAddress = printSettings?.labAddress || 'Balasore';
+    const headerMargin = printSettings?.headerMargin || 20;
 
     return (
         <div ref={ref} style={{ 
@@ -57,7 +75,7 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
         }}>
             
             {/* Watermark */}
-            {showWatermark && (
+            {(printSettings?.showWatermark ?? showWatermark) && (
             <div style={{
                 position: 'absolute',
                 top: '50%',
@@ -67,19 +85,48 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
                 color: 'rgba(0,0,0,0.05)',
                 whiteSpace: 'nowrap',
                 pointerEvents: 'none',
-                zIndex: 0
+                zIndex: 0,
+                textAlign: 'center',
+                width: '100%'
             }}>
-                IzyHealth By Rutu Dev Labs
+                {printSettings?.watermarkText || 'IzyHealth By Rutu Dev Labs'}
             </div>
             )}
 
-            {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Raj Labs</h1>
-                <p style={{ fontSize: '14px', margin: '5px 0' }}>Balasore</p>
-                <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
-                <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>BILL RECEIPT</h2>
-            </div>
+            {/* Header - Conditional based on settings */}
+            {headerType === 'text' && (
+                <div style={{ textAlign: 'center', marginBottom: `${headerMargin}px` }}>
+                    <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{labName}</h1>
+                    <p style={{ fontSize: '14px', margin: '5px 0' }}>{labAddress}</p>
+                    <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
+                    <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>BILL RECEIPT</h2>
+                </div>
+            )}
+
+            {headerType === 'image' && printSettings?.headerImageUrl && (
+                <div style={{ marginBottom: `${headerMargin}px` }}>
+                    <div style={{ overflow: 'hidden' }}>
+                        <img 
+                            src={printSettings.headerImageUrl} 
+                            alt="Header" 
+                            style={{ 
+                                width: '100%', 
+                                height: '120px', 
+                                objectFit: 'cover',
+                                display: 'block'
+                            }} 
+                        />
+                    </div>
+                    <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
+                    <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>BILL RECEIPT</h2>
+                </div>
+            )}
+
+            {headerType === 'none' && (
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>BILL RECEIPT</h2>
+                </div>
+            )}
 
             {/* Meta Grid */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', fontSize: '14px', lineHeight: '1.6' }}>

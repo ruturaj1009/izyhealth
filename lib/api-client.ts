@@ -8,8 +8,11 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const orgid = typeof window !== 'undefined' ? localStorage.getItem('orgid') : null;
 
-    const headers = {
-        'Content-Type': 'application/json',
+    // Don't set Content-Type for FormData - browser will set it with boundary
+    const isFormData = options.body instanceof FormData;
+
+    const headers: Record<string, string> = {
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(orgid ? { 'x-org-id': orgid } : {}),
         ...options.headers
@@ -65,7 +68,11 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
 
 export const api = {
     get: (endpoint: string) => apiRequest(endpoint, { method: 'GET' }),
-    post: (endpoint: string, body: any) => apiRequest(endpoint, { method: 'POST', body: JSON.stringify(body) }),
+    post: (endpoint: string, body: any) => {
+        // If body is FormData, pass it directly; otherwise stringify
+        const requestBody = body instanceof FormData ? body : JSON.stringify(body);
+        return apiRequest(endpoint, { method: 'POST', body: requestBody });
+    },
     put: (endpoint: string, body: any) => apiRequest(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
     delete: (endpoint: string) => apiRequest(endpoint, { method: 'DELETE' }),
 };

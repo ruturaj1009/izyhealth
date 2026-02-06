@@ -38,6 +38,7 @@ export default function PatientBillViewPage() {
     const [bill, setBill] = useState<BillDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const componentRef = useRef<HTMLDivElement>(null);
+    const [printSettings, setPrintSettings] = useState<any>(null);
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
@@ -52,15 +53,30 @@ export default function PatientBillViewPage() {
 
     async function fetchBill(id: string) {
         try {
-            const res = await fetch(`/api/v1/bills/${id}`);
+            const res = await fetch(`/api/v1/public/bills/${id}`);
             const data = await res.json();
             if (data.status === 200) {
                 setBill(data.data);
+                if (data.data.orgid) {
+                    fetchPrintSettings(data.data.orgid);
+                }
             }
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function fetchPrintSettings(orgid: number) {
+        try {
+            const res = await fetch(`/api/v1/public/settings/print?type=bill&orgid=${orgid}`);
+            const data = await res.json();
+            if (data.status === 200) {
+                setPrintSettings(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch print settings:', err);
         }
     }
 
@@ -212,7 +228,7 @@ export default function PatientBillViewPage() {
 
             {/* Hidden Print Component */}
             <div style={{ display: 'none' }}>
-                {bill && <BillReceipt ref={componentRef} bill={bill} showWatermark={true} />}
+                {bill && <BillReceipt ref={componentRef} bill={bill} showWatermark={true} printSettings={printSettings} />}
             </div>
         </div>
     );

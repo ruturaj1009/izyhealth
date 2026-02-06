@@ -49,6 +49,7 @@ export default function PatientReportViewPage() {
     const [loading, setLoading] = useState(true);
     const [watermarkText] = useState('Health Amaze Demo Account');
     const [interpretationModal, setInterpretationModal] = useState<{title: string, text: string} | null>(null);
+    const [printSettings, setPrintSettings] = useState<any>(null);
 
     // Print Handling
     const printRef = useRef<HTMLDivElement>(null);
@@ -63,11 +64,27 @@ export default function PatientReportViewPage() {
         }
     }, [id]);
 
+    async function fetchPrintSettings(orgid: number) {
+        try {
+            const res = await fetch(`/api/v1/public/settings/print?type=report&orgid=${orgid}`);
+            const data = await res.json();
+            if (data.status === 200) {
+                setPrintSettings(data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch print settings:', err);
+        }
+    }
+
     async function fetchReport(id: string) {
         try {
-            const data = await api.get(`/api/v1/reports/${id}`);
+            const res = await fetch(`/api/v1/public/reports/${id}`);
+            const data = await res.json();
             if (data.status === 200) {
                 setReport(data.data);
+                if (data.data.orgid) {
+                    fetchPrintSettings(data.data.orgid);
+                }
             }
         } catch (err) {
             console.error(err);
@@ -308,7 +325,7 @@ export default function PatientReportViewPage() {
 
             {/* Hidden Print Component */}
             <div style={{ display: 'none' }}>
-                {report && <ReportPrint ref={printRef} report={{...report, watermarkText}} />}
+                {report && <ReportPrint ref={printRef} report={{...report, watermarkText}} printSettings={printSettings} />}
             </div>
         </div>
     );
