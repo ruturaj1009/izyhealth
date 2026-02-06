@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api-client';
 import styles from './page.module.css';
 
 interface Patient {
@@ -31,8 +32,7 @@ export default function PatientsPage() {
     async function fetchPatients(page: number) {
         setLoading(true);
         try {
-            const res = await fetch(`/api/v1/users?role=PATIENT&page=${page}&limit=${limit}`);
-            const data = await res.json();
+            const data = await api.get(`/users?role=PATIENT&page=${page}&limit=${limit}`);
             if (data.status === 200) {
                 setPatients(data.data);
                 if (data.metadata?.pagination) {
@@ -84,6 +84,7 @@ export default function PatientsPage() {
                     <table className={styles.table}>
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Name</th>
                                 <th>Gender</th>
                                 <th>Age</th>
@@ -94,12 +95,17 @@ export default function PatientsPage() {
 
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={5} style={{textAlign:'center', padding: '30px'}}>Loading patients...</td></tr>
+                                <tr><td colSpan={6} style={{textAlign:'center', padding: '30px'}}>Loading patients...</td></tr>
                             ) : filteredPatients.length === 0 ? (
-                                <tr><td colSpan={5} style={{textAlign:'center', padding: '30px'}}>No patients found</td></tr>
+                                <tr><td colSpan={6} style={{textAlign:'center', padding: '30px'}}>No patients found</td></tr>
                             ) : (
                                 filteredPatients.map((patient, i) => (
                                     <tr key={patient._id || i}>
+                                        <td data-label="ID">
+                                            <span style={{background:'#e0f2fe', color:'#0369a1', padding:'2px 6px', borderRadius:'4px', fontSize:'12px', fontFamily:'monospace'}}>
+                                                {patient._id ? patient._id.slice(-6).toUpperCase() : '-'}
+                                            </span>
+                                        </td>
                                         <td data-label="Name" style={{fontWeight:'bold'}}>
                                             {patient.firstName} {patient.lastName}
                                         </td>

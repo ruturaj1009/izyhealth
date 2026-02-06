@@ -3,17 +3,32 @@ import dbConnect from '@/lib/db';
 import Bill from '@/models/Bill';
 import Report from '@/models/Report';
 import { ReportStatus } from '@/enums/report';
+import { authorize } from '@/lib/auth';
+
+// Helper function to format reference ranges
+function formatReferenceRange(referenceRanges: any[]): string {
+    if (!referenceRanges || referenceRanges.length === 0) return '';
+
+    return referenceRanges.map((r: any) => {
+        let val = '';
+        if (r.min && r.max) val = `${r.min} - ${r.max}`;
+        else if (r.min) val = `> ${r.min}`;
+        else if (r.max) val = `< ${r.max}`;
+        return r.name ? `${r.name}: ${val}` : val;
+    }).filter(Boolean).join(', ');
+}
 
 export async function POST(request: Request) {
     await dbConnect();
     try {
+        const user = await authorize(request);
         const { billId } = await request.json();
 
         if (!billId) {
             return NextResponse.json({ status: 400, error: 'Bill ID is required' }, { status: 400 });
         }
 
-        const bill = await Bill.findById(billId)
+        const bill = await Bill.findOne({ _id: billId, orgid: user.orgid })
             .populate('patient')
             .populate('doctor')
             .populate({ path: 'tests.test', populate: { path: 'subTests' } });
@@ -45,7 +60,7 @@ export async function POST(request: Request) {
                             type: sub.type || 'normal',
                             status: 'PENDING',
                             unit: sub.unit || '',
-                            referenceRange: ''
+                            referenceRange: formatReferenceRange(sub.referenceRanges)
                         }))
                     };
                     reportResults.push(groupResult);
@@ -57,12 +72,13 @@ export async function POST(request: Request) {
                         type: testDef.type || 'normal',
                         status: 'PENDING',
                         unit: testDef.unit || '',
-                        referenceRange: ''
+                        referenceRange: formatReferenceRange(testDef.referenceRanges)
                     });
                 }
             });
 
             report = await Report.create({
+                orgid: user.orgid,
                 bill: bill._id,
                 patient: bill.patient._id,
                 doctor: bill.doctor._id,
@@ -77,10 +93,12 @@ export async function POST(request: Request) {
             message: 'Report synced successfully'
         });
 
-    } catch (error) {
+    } catch (error: any) {
+        const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
         return NextResponse.json({
-            status: 500,
+            status: status,
             error: (error as Error).message
-        }, { status: 500 });
+        }, { status: status });
     }
 }
+

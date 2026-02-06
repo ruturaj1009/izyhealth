@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api-client';
 import styles from './page.module.css';
 import toast from 'react-hot-toast';
 
@@ -48,13 +49,8 @@ export default function CreatePatientPage() {
         }
 
         try {
-            const res = await fetch('/api/v1/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, role: 'PATIENT' })
-            });
-            const data = await res.json();
-            if (res.ok) {
+            const data = await api.post('/users', { ...formData, role: 'PATIENT' });
+            if (data.status === 201) {
                 toast.success('Patient Created Successfully');
                 router.push('/patients');
             } else {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useReactToPrint } from 'react-to-print';
 import { ReportPrint } from '@/app/components/ReportPrint';
+import { api } from '@/lib/api-client';
 
 interface TestResult {
     testId: string | { 
@@ -14,7 +15,7 @@ interface TestResult {
         department?: { name: string };
         interpretation?: string;
         method?: string;
-    type?: string; 
+        type?: string; 
         groupResults?: TestResult[];
     };
     testName: string;
@@ -64,9 +65,8 @@ export default function PatientReportViewPage() {
 
     async function fetchReport(id: string) {
         try {
-            const res = await fetch(`/api/v1/reports/${id}`);
-            const data = await res.json();
-            if (res.ok) {
+            const data = await api.get(`/api/v1/reports/${id}`);
+            if (data.status === 200) {
                 setReport(data.data);
             }
         } catch (err) {
@@ -273,9 +273,7 @@ export default function PatientReportViewPage() {
                 {report.impression && (
                     <div style={cardStyle}>
                         <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b', marginBottom: '10px' }}>Impression</h3>
-                        <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                            {report.impression}
-                        </div>
+                        <div dangerouslySetInnerHTML={{ __html: report.impression }} style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6' }} />
                     </div>
                 )}
 

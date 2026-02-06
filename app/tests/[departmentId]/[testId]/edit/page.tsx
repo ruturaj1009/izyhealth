@@ -403,6 +403,7 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
 
 
 
+            {testType === 'descriptive' && (
                  <div>
                     <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#64748b' }}>
                         {testType === 'descriptive' ? 'Default Content / Template' : 'Interpretation'}
@@ -412,6 +413,7 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
                         onChange={(html) => setInterpretation(html)} 
                     />
                  </div>
+            )}
             
             {testType === 'group' && (
                  <div style={{ padding: '20px', background: '#e0f2fe', borderRadius: '8px', color: '#0369a1' }}>
@@ -425,13 +427,14 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
                     type="button"
                     style={{
                         padding: '12px 24px',
-                        background: '#f1f5f9',
-                        color: '#64748b',
-                        border: 'none',
+                        background: '#e2e8f0',
+                        color: '#0f172a',
+                        border: '1px solid #cbd5e1',
                         borderRadius: '8px',
                         fontSize: '16px',
                         fontWeight: 600,
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                     }}
                 >
                     Cancel

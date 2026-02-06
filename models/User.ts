@@ -36,8 +36,8 @@ const PatientSchema = new Schema({});
 export const Patient = User.discriminators?.PATIENT || User.discriminator<IPatient>('PATIENT', PatientSchema);
 
 const DoctorSchema = new Schema({
-    hospitalName: { type: String, required: true },
-    revenueSharing: { type: Number, required: true, min: 0, max: 100 },
+    hospitalName: { type: String },
+    revenueSharing: { type: Number, min: 0, max: 100 },
 });
 
 export const Doctor = User.discriminators?.DOCTOR || User.discriminator<IDoctor>('DOCTOR', DoctorSchema);

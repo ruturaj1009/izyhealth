@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
+import { api } from '@/lib/api-client';
 
 interface Test {
     _id: string;
@@ -61,8 +62,7 @@ export default function AddTestPage() {
     // Fetch Bill and Pre-fill State
     async function fetchBill(billId: string) {
         try {
-            const res = await fetch(`/api/v1/bills/${billId}`);
-            const data = await res.json();
+            const data = await api.get(`/bills/${billId}`);
             if (data.status === 200) {
                 const b = data.data;
                 setBill(b);
@@ -107,8 +107,7 @@ export default function AddTestPage() {
         const delayDebounce = setTimeout(async () => {
             if (testSearch.length > 0) {
                 try {
-                    const res = await fetch(`/api/v1/tests?search=${testSearch}`);
-                    const data = await res.json();
+                    const data = await api.get(`/tests?search=${testSearch}`);
                     if (data.success) setAvailableTests(data.data);
                 } catch (e) {
                     console.error(e);
@@ -181,12 +180,7 @@ export default function AddTestPage() {
                 duePaymentType: paymentType // Capture new payment type for the additional amount
             };
 
-            const res = await fetch(`/api/v1/bills/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+            const data = await api.put(`/bills/${id}`, payload);
 
             if (data.status === 200) {
                 toast.success('Bill updated successfully');

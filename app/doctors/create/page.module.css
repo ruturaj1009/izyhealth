@@ -89,3 +89,23 @@
 @media(max-width:768px){
     .row { flex-direction: column; }
 }
+
+.inputWrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+}
+
+.inputWrapper input,
+.inputWrapper select {
+    width: 100%;
+}
+
+.requiredStar {
+    position: absolute;
+    right: 8px;
+    top: 10px;
+    color: red;
+    font-size: 16px;
+    pointer-events: none;
+}

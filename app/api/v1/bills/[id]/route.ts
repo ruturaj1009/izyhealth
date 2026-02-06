@@ -22,6 +22,11 @@ export async function GET(
             .populate('doctor')
             .populate('tests.test');
 
+        console.log('API FETCH BILL:', id);
+        console.log('PATIENT:', bill?.patient);
+        console.log('DOCTOR:', bill?.doctor);
+        console.log('TESTS:', JSON.stringify(bill?.tests));
+
         if (!bill) {
             return NextResponse.json({ status: 404, error: 'Bill not found' }, { status: 404 });
         }
@@ -58,6 +63,7 @@ export async function PUT(
     const { id } = params;
 
     try {
+        await authorize(request);
         const body = await request.json();
         // Extract fields we allow updating
         // We expect: tests, totalAmount, discountAmount, paidAmount, dueAmount, paymentType, discountType, status
@@ -122,7 +128,7 @@ export async function PUT(
                 status: finalStatus
             },
             { new: true }
-        ).populate('tests.test');
+        ).populate('patient').populate('doctor').populate('tests.test');
 
         if (!updatedBill) {
             return NextResponse.json({ status: 404, error: 'Bill not found' }, { status: 404 });

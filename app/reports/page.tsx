@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import styles from '../bills/page.module.css'; // Reusing bills styles for consistency, or inline for specific overrides
+import { api } from '@/lib/api-client';
+import { ReportStatus } from '@/enums/report';
 
 interface Report {
     _id: string;
@@ -11,8 +12,6 @@ interface Report {
     doctor: { firstName: string; lastName: string; title: string };
     status: string;
 }
-
-import { ReportStatus } from '@/enums/report';
 
 const statusMap: Record<string, string> = {
     [ReportStatus.INITIAL]: 'Initial',
@@ -39,9 +38,8 @@ export default function ReportsPage() {
 
     useEffect(() => {
         fetchReports(currentPage, selectedDate);
-    }, [currentPage, selectedDate]); // Added searchVal dependency if we want auto-search, but UI has "SEARCH" button
+    }, [currentPage, selectedDate]); 
 
-    // Trigger search manually or on enter? Screenshot implies "SEARCH" button.
     const handleSearch = () => {
         setCurrentPage(1);
         fetchReports(1, selectedDate);
@@ -54,8 +52,7 @@ export default function ReportsPage() {
             if (date) url += `&date=${date}`;
             if (searchVal) url += `&search=${searchVal}`;
             
-            const res = await fetch(url);
-            const data = await res.json();
+            const data = await api.get(url);
             if (data.status === 200) {
                 setReports(data.data);
                 if (data.metadata) {

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api-client';
 import styles from './page.module.css';
 
 interface Doctor {
@@ -30,8 +31,7 @@ export default function DoctorsPage() {
     async function fetchDoctors(page: number) {
         setLoading(true);
         try {
-            const res = await fetch(`/api/v1/users?role=DOCTOR&page=${page}&limit=${limit}`);
-            const data = await res.json();
+            const data = await api.get(`/users?role=DOCTOR&page=${page}&limit=${limit}`);
             if (data.status === 200) {
                 setDoctors(data.data);
                 if (data.metadata?.pagination) {
@@ -79,6 +79,7 @@ export default function DoctorsPage() {
                     <table className={styles.table}>
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Full Name</th>
                                 <th>Gender</th>
                                 <th>Phone</th>
@@ -88,12 +89,17 @@ export default function DoctorsPage() {
 
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={4} style={{textAlign:'center', padding: '30px'}}>Loading doctors...</td></tr>
+                                <tr><td colSpan={5} style={{textAlign:'center', padding: '30px'}}>Loading doctors...</td></tr>
                             ) : filteredDoctors.length === 0 ? (
-                                <tr><td colSpan={4} style={{textAlign:'center', padding: '30px'}}>No doctors found</td></tr>
+                                <tr><td colSpan={5} style={{textAlign:'center', padding: '30px'}}>No doctors found</td></tr>
                             ) : (
                                 filteredDoctors.map((doc, i) => (
                                     <tr key={doc._id || i}>
+                                        <td data-label="ID">
+                                            <span style={{background:'#e0f2fe', color:'#0369a1', padding:'2px 6px', borderRadius:'4px', fontSize:'12px', fontFamily:'monospace'}}>
+                                                {doc._id ? doc._id.slice(-6).toUpperCase() : '-'}
+                                            </span>
+                                        </td>
                                         <td data-label="Full Name" style={{fontWeight:'bold'}}>{doc.firstName} {doc.lastName}</td>
                                         <td data-label="Gender">{doc.gender || '—'}</td>
                                         <td data-label="Phone">{doc.mobile || '—'}</td>

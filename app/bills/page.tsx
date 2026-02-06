@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api-client';
 import styles from './page.module.css';
 
 interface Bill {
@@ -38,8 +39,7 @@ export default function BillsPage() {
             let url = `/api/v1/bills?page=${page}&limit=${limit}`;
             if (date) url += `&date=${date}`;
             
-            const res = await fetch(url);
-            const data = await res.json();
+            const data = await api.get(url);
             if (data.status === 200) {
                 setBills(data.data);
                 if (data.metadata?.pagination) {

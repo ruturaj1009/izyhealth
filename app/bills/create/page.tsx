@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { api } from '@/lib/api-client';
 import styles from './page.module.css';
 
 interface PatientData {
@@ -78,8 +79,7 @@ export default function CreateBillPage() {
         const delayDebounce = setTimeout(async () => {
             if (patientSearch.length > 2) {
                 try {
-                    const res = await fetch(`/api/v1/users?role=PATIENT&search=${patientSearch}`);
-                    const data = await res.json();
+                    const data = await api.get(`/users?role=PATIENT&search=${patientSearch}`);
                     if (data.status === 200) setPatientResults(data.data);
                 } catch (e) {
                     console.error(e);
@@ -96,8 +96,7 @@ export default function CreateBillPage() {
         const delayDebounce = setTimeout(async () => {
             if (doctorSearch.length > 2) {
                 try {
-                    const res = await fetch(`/api/v1/users?role=DOCTOR&search=${doctorSearch}`);
-                    const data = await res.json();
+                    const data = await api.get(`/users?role=DOCTOR&search=${doctorSearch}`);
                     if (data.status === 200) setDoctorResults(data.data);
                 } catch (e) {
                     console.error(e);
@@ -114,8 +113,7 @@ export default function CreateBillPage() {
         const delayDebounce = setTimeout(async () => {
             if (testSearch.length > 0) {
                 try {
-                    const res = await fetch(`/api/v1/tests?search=${testSearch}`);
-                    const data = await res.json();
+                    const data = await api.get(`/tests?search=${testSearch}`);
                     if (data.success) setAvailableTests(data.data);
                 } catch (e) {
                     console.error(e);
@@ -223,12 +221,9 @@ export default function CreateBillPage() {
 
                 console.log('Creating Patient:', cleanPatient); // Debug log
 
-                const res = await fetch('/api/v1/users', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...cleanPatient, role: 'PATIENT' })
-                });
-                const data = await res.json();
+                console.log('Creating Patient:', cleanPatient); // Debug log
+
+                const data = await api.post('/users', { ...cleanPatient, role: 'PATIENT' });
                 
                 console.log('Create Patient Response:', data); // Debug log
 
@@ -261,12 +256,9 @@ export default function CreateBillPage() {
             // Debug log
             console.log('Submitting Bill Payload:', payload);
 
-            const billRes = await fetch('/api/v1/bills', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const billData = await billRes.json();
+            console.log('Submitting Bill Payload:', payload);
+
+            const billData = await api.post('/bills', payload);
 
             if (billData.status === 201) {
                 toast.success('Bill generated successfully!');

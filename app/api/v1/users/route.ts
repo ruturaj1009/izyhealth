@@ -107,15 +107,15 @@ export async function POST(request: Request) {
         if (rest.mobile === '') delete rest.mobile;
 
         // Validate role specific requirements
-        if (role === UserRole.DOCTOR) {
-            if (!rest.hospitalName || rest.revenueSharing === undefined) {
-                const response: ApiResponse<null> = {
-                    status: 400,
-                    error: 'Doctor requires hospitalName and revenueSharing'
-                };
-                return NextResponse.json(response, { status: 400 });
-            }
-        }
+        // if (role === UserRole.DOCTOR) {
+        //     if (!rest.hospitalName || rest.revenueSharing === undefined) {
+        //         const response: ApiResponse<null> = {
+        //             status: 400,
+        //             error: 'Doctor requires hospitalName and revenueSharing'
+        //         };
+        //         return NextResponse.json(response, { status: 400 });
+        //     }
+        // }
 
         // Check dupe email within Org? Or globally?
         // Emails usually unique globally per SaaS logic if they login, but this is `User` model (Patients/Doctors) not `Auth`.

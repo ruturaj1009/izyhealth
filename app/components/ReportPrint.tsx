@@ -32,6 +32,9 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                 {`
                 @page { size: A4; margin: 0; }
                 body { margin: 0; }
+                .rte-content table { width: 100%; border-collapse: collapse; margin-top: 5px; margin-bottom: 5px; }
+                .rte-content th, .rte-content td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+                .rte-content th { background-color: #f1f1f1; font-weight: bold; }
                 `}
             </style>
             {allResults.map((result, index) => {
@@ -211,10 +214,10 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                             {rowsToRender.map((row: any, rIdx) => {
                                 // Skip loop interpretation for single tests to avoid duplication
                                 if (!isGroup) return null;
-                                const interp = row.testId?.interpretation;
+                                const interp = row.remarks || row.testId?.interpretation;
                                 if (!interp) return null;
                                 return (
-                                    <div key={rIdx} style={{ marginTop: '10px' }}>
+                                    <div key={rIdx} style={{ marginTop: '10px' }} className="rte-content">
                                         <div style={{ fontWeight: 'bold', fontSize: '12px', borderBottom: '1px solid #ddd', marginBottom: '5px' }}>
                                             INTERPRETATION: {row.testName}
                                         </div>
@@ -224,10 +227,10 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                             })}
                             
                             {/* Interpretation for the Top Level Result (if it wasn't in rowsToRender e.g. single test) */}
-                            {!isGroup && result.testId?.interpretation && (
-                                <div style={{ marginTop: '20px' }}>
+                            {!isGroup && (result.remarks || result.testId?.interpretation) && (
+                                <div style={{ marginTop: '20px' }} className="rte-content">
                                     <div style={{ fontWeight: 'bold', fontSize: '13px', borderBottom: '1px solid #ddd', marginBottom: '10px' }}>INTERPRETATION</div>
-                                    <div dangerouslySetInnerHTML={{ __html: result.testId.interpretation }} style={{ fontSize: '12px', lineHeight: '1.4' }} />
+                                    <div dangerouslySetInnerHTML={{ __html: result.remarks || result.testId?.interpretation }} style={{ fontSize: '12px', lineHeight: '1.4' }} />
                                 </div>
                             )}
 
@@ -235,7 +238,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                              {report.impression && (
                                 <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #eee', borderRadius: '4px' }}>
                                     <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: '13px' }}>IMPRESSION:</div>
-                                    <div style={{ whiteSpace: 'pre-wrap' }}>{report.impression}</div>
+                                    <div dangerouslySetInnerHTML={{ __html: report.impression }} style={{ fontSize: '12px', lineHeight: '1.4' }} />
                                 </div>
                             )}
                             

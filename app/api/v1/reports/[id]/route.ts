@@ -26,6 +26,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                     path: 'department',
                     select: 'name'
                 }
+            })
+            .populate({
+                path: 'results.groupResults.testId',
+                select: 'name type department unit referenceRanges interpretation method'
             });
 
         if (!report) {
@@ -96,6 +100,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
                     path: 'department',
                     select: 'name'
                 }
+            })
+            .populate({
+                path: 'results.groupResults.testId',
+                select: 'name type department unit referenceRanges interpretation method'
             });
 
         return NextResponse.json({

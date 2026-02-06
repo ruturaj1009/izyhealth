@@ -1,19 +1,24 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api-client';
 import styles from './page.module.css';
+import toast from 'react-hot-toast';
 
 export default function CreateDoctorPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
+        title: 'Dr.',
+        age: '',
         gender: 'Male',
         isOrganisation: false,
         email: '',
         mobile: '',
         address: '',
-        doctorId: ''
+        hospitalName: '',
+        revenueSharing: ''
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -21,6 +26,8 @@ export default function CreateDoctorPage() {
         if (e.target.type === 'checkbox') {
              const checked = (e.target as HTMLInputElement).checked;
              setFormData(prev => ({ ...prev, [name]: checked }));
+        } else if (name === 'age' || name === 'revenueSharing') {
+             setFormData(prev => ({ ...prev, [name]: Number(value) }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -29,21 +36,34 @@ export default function CreateDoctorPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('/api/v1/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, role: 'DOCTOR' })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert('Doctor Created Successfully');
+            // Prepare payload
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const payload: any = { ...formData, role: 'DOCTOR' };
+
+            // Handle numeric fields safely
+            if (payload.age !== '') payload.age = Number(payload.age);
+            
+            // Handle optional organisation fields
+            if (!payload.isOrganisation) {
+                delete payload.hospitalName;
+                delete payload.revenueSharing;
+            } else {
+                if (payload.revenueSharing !== '') payload.revenueSharing = Number(payload.revenueSharing);
+            }
+
+            // Remove empty strings for optional fields to match schema expectations if needed
+            // But Zod optional() handles undefined, not empty string for numbers.
+
+            const data = await api.post('/users', payload);
+            if (data.status === 201 || data.data) {
+                toast.success('Doctor Created Successfully');
                 router.push('/doctors');
             } else {
-                alert('Error: ' + JSON.stringify(data.error));
+                toast.error(data.error || 'Failed to create doctor');
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert('Failed to create doctor');
+            toast.error(err.message || 'Failed to create doctor');
         }
     };
 
@@ -56,14 +76,23 @@ export default function CreateDoctorPage() {
                         <h3>Basic Details</h3>
 
                         <div className={styles.row}>
-                            <input 
-                                name="firstName" 
-                                type="text" 
-                                placeholder="First Name"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                required
-                            />
+                            <select name="title" value={formData.title} onChange={handleChange} style={{ width: '80px', marginRight: '10px' }}>
+                                <option>Dr.</option>
+                                <option>Mr.</option>
+                                <option>Mrs.</option>
+                                <option>Ms.</option>
+                            </select>
+                            <div className={styles.inputWrapper}>
+                                <input 
+                                    name="firstName" 
+                                    type="text" 
+                                    placeholder="First Name"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <span className={styles.requiredStar}>*</span>
+                            </div>
                             <input 
                                 name="lastName" 
                                 type="text" 
@@ -74,6 +103,17 @@ export default function CreateDoctorPage() {
                         </div>
 
                         <div className={styles.row}>
+                            <div className={styles.inputWrapper}>
+                                <input 
+                                    name="age" 
+                                    type="number" 
+                                    placeholder="Age"
+                                    value={formData.age}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <span className={styles.requiredStar}>*</span>
+                            </div>
                             <select name="gender" value={formData.gender} onChange={handleChange}>
                                 <option>Male</option>
                                 <option>Female</option>
@@ -122,15 +162,35 @@ export default function CreateDoctorPage() {
                             ></textarea>
                         </div>
 
-                        <div className={styles.row}>
-                            <input 
-                                name="doctorId" 
-                                type="text" 
-                                placeholder="Doctor ID"
-                                value={formData.doctorId}
-                                onChange={handleChange}
-                            />
-                        </div>
+
+                        {formData.isOrganisation && (
+                            <div className={styles.row}>
+                                <div className={styles.inputWrapper}>
+                                    <input 
+                                        name="hospitalName" 
+                                        type="text" 
+                                        placeholder="Hospital Name"
+                                        value={formData.hospitalName}
+                                        onChange={handleChange}
+                                        required={formData.isOrganisation}
+                                    />
+                                    <span className={styles.requiredStar}>*</span>
+                                </div>
+                                <div className={styles.inputWrapper}>
+                                    <input 
+                                        name="revenueSharing" 
+                                        type="number" 
+                                        placeholder="Revenue Sharing (%)"
+                                        value={formData.revenueSharing}
+                                        onChange={handleChange}
+                                        required={formData.isOrganisation}
+                                        min="0"
+                                        max="100"
+                                    />
+                                    <span className={styles.requiredStar}>*</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* BUTTON LINKS */}

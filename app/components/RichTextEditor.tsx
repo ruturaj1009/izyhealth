@@ -39,11 +39,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
     }
 
     const addTable = () => {
+        const uniqueId = Math.random().toString(36).substr(2, 9);
+        const rowsId = `table-rows-${uniqueId}`;
+        const colsId = `table-cols-${uniqueId}`;
+
         toast((t) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '14px', fontWeight: 500 }}>Table Size:</span>
                 <input 
-                    id="table-rows" 
+                    id={rowsId} 
                     type="number" 
                     placeholder="Rows" 
                     defaultValue={3} 
@@ -52,7 +56,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
                 />
                 <span style={{ fontSize: '14px' }}>x</span>
                 <input 
-                    id="table-cols" 
+                    id={colsId} 
                     type="number" 
                     placeholder="Cols" 
                     defaultValue={3} 
@@ -61,10 +65,10 @@ const MenuBar = ({ editor }: { editor: any }) => {
                 />
                 <button 
                     onClick={() => {
-                        const rInput = document.getElementById('table-rows') as HTMLInputElement;
-                        const cInput = document.getElementById('table-cols') as HTMLInputElement;
-                        const rows = parseInt(rInput.value || '3');
-                        const cols = parseInt(cInput.value || '3');
+                        const rInput = document.getElementById(rowsId) as HTMLInputElement;
+                        const cInput = document.getElementById(colsId) as HTMLInputElement;
+                        const rows = parseInt(rInput?.value || '3');
+                        const cols = parseInt(cInput?.value || '3');
                         
                         if (rows > 0 && cols > 0) {
                             editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run();

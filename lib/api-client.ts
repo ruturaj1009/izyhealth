@@ -15,7 +15,11 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
         ...options.headers
     };
 
-    let response = await fetch(`${endpoint.startsWith('http') ? endpoint : endpoint}`, {
+    const url = endpoint.startsWith('http')
+        ? endpoint
+        : (endpoint.startsWith('/api') ? endpoint : `${API_BASE}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`);
+
+    let response = await fetch(url, {
         ...options,
         headers
     });
@@ -37,7 +41,7 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
                         'Authorization': `Bearer ${data.accessToken}`
                     };
 
-                    response = await fetch(`${endpoint.startsWith('http') ? endpoint : endpoint}`, {
+                    response = await fetch(url, {
                         ...options,
                         headers: newHeaders
                     });
