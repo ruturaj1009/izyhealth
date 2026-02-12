@@ -21,8 +21,10 @@ export interface IPrintSettings {
     // Report-specific settings
     letterhead1Name?: string;
     letterhead1SignatureUrl?: string;
+    showLetterhead1?: boolean;
     letterhead2Name?: string;
     letterhead2SignatureUrl?: string;
+    showLetterhead2?: boolean;
 
     createdAt?: Date;
     updatedAt?: Date;

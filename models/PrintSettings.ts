@@ -25,8 +25,10 @@ const PrintSettingsSchema = new Schema<IPrintSettings>({
     // Report-specific settings
     letterhead1Name: { type: String },
     letterhead1SignatureUrl: { type: String },
+    showLetterhead1: { type: Boolean, default: true },
     letterhead2Name: { type: String },
-    letterhead2SignatureUrl: { type: String }
+    letterhead2SignatureUrl: { type: String },
+    showLetterhead2: { type: Boolean, default: true }
 }, { timestamps: true });
 
 // Compound index to ensure one settings doc per org per type

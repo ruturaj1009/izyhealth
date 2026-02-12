@@ -39,6 +39,7 @@ export async function GET(
             data: report
         });
     } catch (error: any) {
+        console.error('Public Report GET Error:', error);
         return NextResponse.json({
             status: 500,
             error: (error as Error).message

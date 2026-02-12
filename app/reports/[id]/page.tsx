@@ -737,14 +737,30 @@ export default function ReportDetailsPage() {
                 {/* Action Buttons Row */}
                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
                     <button onClick={() => handlePrint()} style={actionBtnStyle('#1565c0')}>PRINT</button>
-                    <button style={actionBtnStyle('#1565c0')}>CUSTOM PRINT</button>
-                    <button onClick={() => setShowPrintSettings(true)} style={actionBtnStyle('#1565c0')}>PRINT SETTINGS</button>
-                    <button style={actionBtnStyle('#1565c0')}>SEND</button>
+                    
+                    <button style={{ ...actionBtnStyle('#1565c0'), opacity: 0.6, cursor: 'not-allowed' }} disabled>
+                        CUSTOM PRINT <i className="fa fa-lock" style={{marginLeft: '5px'}}></i>
+                    </button>
+
+                    <Link href="/settings/report-print">
+                        <button style={actionBtnStyle('#1565c0')}>PRINT SETTINGS</button>
+                    </Link>
+                    
+                    <button style={{ ...actionBtnStyle('#1565c0'), opacity: 0.6, cursor: 'not-allowed' }} disabled>
+                        SEND WHATSAPP <i className="fa fa-lock" style={{marginLeft: '5px'}}></i>
+                    </button>
+
                     <Link href={`/bills/${report?.bill?._id}`}>
                         <button style={actionBtnStyle('#1565c0')}>VIEW BILL</button>
                     </Link>
-                    <button style={actionBtnStyle('#2e7d32')}>VIDEO TUTORIAL</button>
-                    <button style={actionBtnStyle('#1565c0')}>MORE ACTIONS</button>
+
+                    <button style={{ ...actionBtnStyle('#2e7d32'), opacity: 0.6, cursor: 'not-allowed' }} disabled>
+                        VIDEO TUTORIAL <i className="fa fa-lock" style={{marginLeft: '5px'}}></i>
+                    </button>
+
+                    <button style={{ ...actionBtnStyle('#1565c0'), opacity: 0.6, cursor: 'not-allowed' }} disabled>
+                        MORE <i className="fa fa-lock" style={{marginLeft: '5px'}}></i>
+                    </button>
                  </div>
 
             </div>
@@ -787,21 +803,6 @@ export default function ReportDetailsPage() {
              )}
 
              
-            {/* Print Settings Modal */}
-            {showPrintSettings && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
-                    <div style={{ background: 'white', padding: '24px', borderRadius: '8px', width: '400px' }}>
-                        <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 700 }}>Print Settings</h3>
-                        {/* Placeholder Content */}
-                        <div style={{marginBottom: '20px', color: '#64748b'}}>
-                            Settings configuration placeholder.
-                        </div>
-                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                             <button onClick={() => setShowPrintSettings(false)} style={{ padding: '8px 16px', background: '#e2e8f0', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>CLOSE</button>
-                         </div>
-                    </div>
-                </div>
-            )}
 
             {/* Hidden Print Component */}
             <div style={{ display: 'none' }}>

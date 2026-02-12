@@ -176,7 +176,7 @@ export default function BillPrintSettingsPage() {
         headerImageUrl: '',
         footerImageUrl: '',
         showWatermark: true,
-        watermarkText: 'Health Amaze Demo Account'
+        watermarkText: 'Rutu Dev Labs'
     });
 
     // Sample bill data for preview
@@ -573,9 +573,24 @@ export default function BillPrintSettingsPage() {
                         <input
                             type="range"
                             min="0"
-                            max="100"
+                            max="300"
                             value={settings.headerMargin}
                             onChange={(e) => setSettings(prev => ({ ...prev, headerMargin: Number(e.target.value) }))}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+
+                    {/* Font Size */}
+                    <div style={{ marginBottom: '24px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+                            Font Size: {settings.fontSize}px
+                        </label>
+                        <input
+                            type="range"
+                            min="10"
+                            max="24"
+                            value={settings.fontSize}
+                            onChange={(e) => setSettings(prev => ({ ...prev, fontSize: Number(e.target.value) }))}
                             style={{ width: '100%' }}
                         />
                     </div>

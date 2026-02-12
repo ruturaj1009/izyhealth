@@ -137,6 +137,7 @@ export async function POST(request: Request) {
             });
         }
 
+        console.info(`[Bill] Created bill ${bill._id} for patient ${bill.patient._id}`);
         return NextResponse.json({
             status: 201,
             data: bill
@@ -187,8 +188,9 @@ export async function GET(request: Request) {
 
         const total = await Bill.countDocuments(query);
         const bills = await Bill.find(query)
-            .populate('patient')
-            .populate('doctor')
+            .select('patient doctor totalAmount dueAmount status createdAt')
+            .populate('patient', 'firstName lastName mobile')
+            .populate('doctor', 'firstName lastName')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);

@@ -53,7 +53,8 @@ export async function GET(request: Request) {
 
         const total = await Report.countDocuments(query);
         const reports = await Report.find(query)
-            .populate('patient', 'firstName lastName phone age gender')
+            .select('patient doctor date status')
+            .populate('patient', 'firstName lastName mobile age gender')
             .populate('doctor', 'firstName lastName title')
             .sort({ date: -1 })
             .skip(skip)

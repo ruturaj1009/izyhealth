@@ -25,6 +25,8 @@ interface BillReceiptProps {
         discountAmount: number;
         paidAmount: number;
         dueAmount: number;
+        paymentType?: string;
+        duePaymentType?: string;
         createdAt: string;
     };
     showWatermark?: boolean;
@@ -75,6 +77,7 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
             position: 'relative',
             display: 'flex',
             flexDirection: 'column',
+            fontSize: `${printSettings?.fontSize || 14}px`,
             minHeight: '100vh'
         }}>
             <style dangerouslySetInnerHTML={{ __html: `
@@ -221,14 +224,40 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
 
                     {/* Totals */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '10px' }}>
-                        <div style={{ display: 'flex', width: '200px', justifyContent: 'space-between', marginBottom: '5px' }}>
-                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Grand Total</span>
-                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{grandTotal}</span>
+                        <div style={{ display: 'flex', width: '220px', justifyContent: 'space-between', marginBottom: '5px' }}>
+                            <span style={{ fontSize: '14px', color: '#666' }}>Subtotal</span>
+                            <span style={{ fontSize: '14px' }}>{bill.totalAmount}</span>
                         </div>
-                        <div style={{ display: 'flex', width: '200px', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Paid</span>
-                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{bill.paidAmount}</span>
+                        {bill.discountAmount > 0 && (
+                            <div style={{ display: 'flex', width: '220px', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                <span style={{ fontSize: '14px', color: '#666' }}>Discount</span>
+                                <span style={{ fontSize: '14px' }}>- {bill.discountAmount}</span>
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', width: '220px', justifyContent: 'space-between', marginBottom: '5px', padding: '5px 0', borderTop: '1px solid #eee' }}>
+                            <span style={{ fontWeight: 'bold', fontSize: '15px' }}>Grand Total</span>
+                            <span style={{ fontWeight: 'bold', fontSize: '15px', color: '#000' }}>{grandTotal}</span>
                         </div>
+                        <div style={{ display: 'flex', width: '220px', justifyContent: 'space-between', marginBottom: '5px' }}>
+                            <span style={{ fontSize: '14px', color: '#666' }}>Paid Amount</span>
+                            <span style={{ fontSize: '14px', fontWeight: 600 }}>{bill.paidAmount}</span>
+                        </div>
+                        <div style={{ display: 'flex', width: '220px', justifyContent: 'flex-end', marginBottom: '5px' }}>
+                            <span style={{ fontSize: '11px', color: '#666', background: '#f1f5f9', padding: '2px 8px', borderRadius: '4px' }}>Mode: {bill.paymentType || 'CASH'}</span>
+                        </div>
+                        {bill.dueAmount > 0 && (
+                            <>
+                                <div style={{ display: 'flex', width: '220px', justifyContent: 'space-between', marginBottom: '5px', paddingTop: '5px', borderTop: '1px dashed #ccc' }}>
+                                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#ef4444' }}>Due Balance</span>
+                                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#ef4444' }}>{bill.dueAmount}</span>
+                                </div>
+                                {bill.duePaymentType && (
+                                    <div style={{ display: 'flex', width: '220px', justifyContent: 'flex-end', marginBottom: '5px' }}>
+                                        <span style={{ fontSize: '11px', color: '#666', background: '#fef2f2', padding: '2px 8px', borderRadius: '4px' }}>Due Pay Mode: {bill.duePaymentType}</span>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     {/* Footer Signatory */}

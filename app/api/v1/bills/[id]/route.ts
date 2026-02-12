@@ -22,11 +22,6 @@ export async function GET(
             .populate('doctor')
             .populate('tests.test');
 
-        console.log('API FETCH BILL:', id);
-        console.log('PATIENT:', bill?.patient);
-        console.log('DOCTOR:', bill?.doctor);
-        console.log('TESTS:', JSON.stringify(bill?.tests));
-
         if (!bill) {
             return NextResponse.json({ status: 404, error: 'Bill not found' }, { status: 404 });
         }

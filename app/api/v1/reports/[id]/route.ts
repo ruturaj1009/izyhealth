@@ -113,6 +113,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         });
 
     } catch (error: any) {
+        console.error('Report PUT Error:', error);
         const status = error.message.startsWith('Unauthorized') ? 401 : (error.message.startsWith('Forbidden') ? 403 : 500);
         return NextResponse.json({ status: status, error: (error as Error).message }, { status: status });
     }
