@@ -11,12 +11,14 @@ const PrintSettingsSchema = new Schema<IPrintSettings>({
 
     // Common settings
     headerType: { type: String, enum: ['none', 'text', 'image'], default: 'none' },
+    footerType: { type: String, enum: ['none', 'text', 'image'], default: 'none' },
     labName: { type: String },
     labAddress: { type: String },
     headerMargin: { type: Number, default: 20 },
     fontSize: { type: Number, default: 14 },
     headerImageUrl: { type: String },
     footerImageUrl: { type: String },
+    footerText: { type: String },
     showWatermark: { type: Boolean, default: true },
     watermarkText: { type: String, default: 'Health Amaze Demo Account' },
 

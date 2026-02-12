@@ -30,10 +30,12 @@ interface BillReceiptProps {
     showWatermark?: boolean;
     printSettings?: {
         headerType?: 'none' | 'text' | 'image';
+        footerType?: 'none' | 'text' | 'image';
         labName?: string;
         labAddress?: string;
         headerImageUrl?: string;
         footerImageUrl?: string;
+        footerText?: string;
         headerMargin?: number;
         fontSize?: number;
         showWatermark?: boolean;
@@ -63,16 +65,35 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
     const headerMargin = printSettings?.headerMargin || 20;
 
     return (
-        <div ref={ref} style={{ 
+        <div ref={ref} className="bill-receipt-container" style={{ 
             width: '100%', 
             maxWidth: '800px', 
             margin: '0 auto', 
-            padding: '40px', 
             backgroundColor: 'white',
             fontFamily: 'Arial, sans-serif',
             color: '#000',
-            position: 'relative'
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '100vh'
         }}>
+            <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                    @page {
+                        margin: 0;
+                        size: auto;
+                    }
+                    body {
+                        margin: 0;
+                    }
+                    .bill-receipt-container {
+                        max-width: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        min-height: 100vh !important;
+                    }
+                }
+            ` }} />
             
             {/* Watermark */}
             {(printSettings?.showWatermark ?? showWatermark) && (
@@ -93,128 +114,150 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
             </div>
             )}
 
-            {/* Header - Conditional based on settings */}
-            {headerType === 'text' && (
-                <div style={{ textAlign: 'center', marginBottom: `${headerMargin}px` }}>
-                    <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{labName}</h1>
-                    <p style={{ fontSize: '14px', margin: '5px 0' }}>{labAddress}</p>
-                    <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
-                    <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>BILL RECEIPT</h2>
-                </div>
-            )}
+            {/* Content Section with flex-grow to push footer down */}
+            <div style={{ flex: 1 }}>
+                {/* Header - Conditional based on settings */}
+                {headerType === 'text' && (
+                    <div style={{ textAlign: 'center', marginBottom: `${headerMargin}px` }}>
+                        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{labName}</h1>
+                        <p style={{ fontSize: '14px', margin: '5px 0' }}>{labAddress}</p>
+                        <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
+                        <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>BILL RECEIPT</h2>
+                    </div>
+                )}
 
-            {headerType === 'image' && printSettings?.headerImageUrl && (
-                <div style={{ marginBottom: `${headerMargin}px` }}>
-                    <div style={{ overflow: 'hidden' }}>
-                        <img 
-                            src={printSettings.headerImageUrl} 
-                            alt="Header" 
-                            style={{ 
-                                width: '100%', 
-                                height: '120px', 
-                                objectFit: 'cover',
-                                display: 'block'
-                            }} 
-                        />
+                {headerType === 'image' && printSettings?.headerImageUrl && (
+                    <div style={{ marginBottom: `${headerMargin}px` }}>
+                        <div style={{ overflow: 'hidden' }}>
+                            <img 
+                                src={printSettings.headerImageUrl} 
+                                alt="Header" 
+                                style={{ 
+                                    width: '100%', 
+                                    height: 'auto', 
+                                    display: 'block'
+                                }} 
+                            />
+                        </div>
+                        <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
+                        <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>BILL RECEIPT</h2>
                     </div>
-                    <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
-                    <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>BILL RECEIPT</h2>
-                </div>
-            )}
+                )}
 
-            {headerType === 'none' && (
-                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>BILL RECEIPT</h2>
-                </div>
-            )}
+                {headerType === 'none' && (
+                    <div style={{ textAlign: 'center', marginBottom: '20px', paddingTop: '20px' }}>
+                        <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>BILL RECEIPT</h2>
+                    </div>
+                )}
 
-            {/* Meta Grid */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', fontSize: '14px', lineHeight: '1.6' }}>
-                <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex' }}>
-                        <span style={{ width: '80px', color: '#666' }}>Patient:</span>
-                        <span style={{ fontWeight: 600 }}>{bill.patient.title} {bill.patient.firstName} {bill.patient.lastName}</span>
+                {/* Content Wrapper with Padding */}
+                <div style={{ padding: '0 40px 40px 40px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    {/* Meta Grid */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', fontSize: '14px', lineHeight: '1.6' }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex' }}>
+                                <span style={{ width: '80px', color: '#666' }}>Patient:</span>
+                                <span style={{ fontWeight: 600 }}>{bill.patient.title} {bill.patient.firstName} {bill.patient.lastName}</span>
+                            </div>
+                            <div style={{ display: 'flex' }}>
+                                <span style={{ width: '80px', color: '#666' }}>Sex / Age:</span>
+                                <span>{bill.patient.gender} / {bill.patient.age} Years</span>
+                            </div>
+                            <div style={{ display: 'flex' }}>
+                                <span style={{ width: '80px', color: '#666' }}>Ref. by:</span>
+                                <span>{bill.doctor.firstName === 'SELF' ? 'Self' : `Dr. ${bill.doctor.firstName} ${bill.doctor.lastName}`}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingLeft: '40px' }}>
+                             <div style={{ display: 'flex' }}>
+                                <span style={{ width: '60px', color: '#666' }}>Date:</span>
+                                <span style={{ fontWeight: 600 }}>{formattedDate}</span>
+                            </div>
+                             <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span style={{ width: '60px', color: '#666' }}>Bill ID:</span>
+                                <span style={{ fontWeight: 600 }}>{billIdShort}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ width: '120px', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                            <Barcode 
+                                value={billIdShort} 
+                                height={30} 
+                                width={1.5} 
+                                displayValue={true} 
+                                fontSize={10} 
+                                margin={0}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                 <QRCodeSVG 
+                                    value={`${process.env.NEXT_PUBLIC_APP_URL || 'https://x-pharma.vercel.app'}/bills/${bill._id}/view`} 
+                                    size={50} 
+                                />
+                                 <div style={{ fontSize: '9px', marginTop: '2px', color: '#666' }}>Scan to View</div>
+                            </div>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex' }}>
-                        <span style={{ width: '80px', color: '#666' }}>Sex / Age:</span>
-                        <span>{bill.patient.gender} / {bill.patient.age} Years</span>
+
+                    {/* Table */}
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                        <thead>
+                            <tr style={{ borderTop: '2px solid #000', borderBottom: '1px solid #000' }}>
+                                <th style={{ textAlign: 'left', padding: '8px 0', fontSize: '14px' }}>Sl.</th>
+                                <th style={{ textAlign: 'left', padding: '8px 0', fontSize: '14px' }}>Test Name</th>
+                                <th style={{ textAlign: 'right', padding: '8px 0', fontSize: '14px' }}>Price (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {bill.tests.map((item, index) => (
+                                <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                                    <td style={{ padding: '8px 0', fontSize: '14px' }}>{index + 1}</td>
+                                    <td style={{ padding: '8px 0', fontSize: '14px' }}>{item.test.name}</td>
+                                    <td style={{ textAlign: 'right', padding: '8px 0', fontSize: '14px' }}>{item.price}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                    {/* Totals */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '10px' }}>
+                        <div style={{ display: 'flex', width: '200px', justifyContent: 'space-between', marginBottom: '5px' }}>
+                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Grand Total</span>
+                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{grandTotal}</span>
+                        </div>
+                        <div style={{ display: 'flex', width: '200px', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Paid</span>
+                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{bill.paidAmount}</span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex' }}>
-                        <span style={{ width: '80px', color: '#666' }}>Ref. by:</span>
-                        <span>{bill.doctor.firstName === 'SELF' ? 'Self' : `Dr. ${bill.doctor.firstName} ${bill.doctor.lastName}`}</span>
+
+                    {/* Footer Signatory */}
+                    <div style={{ marginTop: 'auto', paddingTop: '40px', textAlign: 'right' }}>
+                         <div style={{ display: 'inline-block', textAlign: 'center' }}>
+                            <div style={{ borderTop: '2px solid #000', width: '200px', marginBottom: '5px' }}></div>
+                            <span style={{ fontSize: '14px', fontWeight: 600 }}>Authorized Signatory</span>
+                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingLeft: '40px' }}>
-                     <div style={{ display: 'flex' }}>
-                        <span style={{ width: '60px', color: '#666' }}>Date:</span>
-                        <span style={{ fontWeight: 600 }}>{formattedDate}</span>
-                    </div>
-                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span style={{ width: '60px', color: '#666' }}>Bill ID:</span>
-                        <span style={{ fontWeight: 600 }}>{billIdShort}</span>
-                    </div>
-                </div>
-
-                <div style={{ width: '120px', textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                    <Barcode 
-                        value={billIdShort} 
-                        height={30} 
-                        width={1.5} 
-                        displayValue={true} 
-                        fontSize={10} 
-                        margin={0}
+            {/* Footer Rendering */}
+            {printSettings?.footerType === 'image' && printSettings?.footerImageUrl && (
+                <div style={{ marginTop: '20px' }}>
+                    <div style={{ borderTop: '1px solid #ccc', margin: '15px 0' }}></div>
+                    <img 
+                        src={printSettings.footerImageUrl} 
+                        alt="Footer" 
+                        style={{ width: '100%', height: '80px', objectFit: 'cover', display: 'block' }} 
                     />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                         <QRCodeSVG 
-                            value={`${process.env.NEXT_PUBLIC_APP_URL || 'https://x-pharma.vercel.app'}/bills/${bill._id}/view`} 
-                            size={50} 
-                        />
-                         <div style={{ fontSize: '9px', marginTop: '2px', color: '#666' }}>Scan to View</div>
-                    </div>
                 </div>
-            </div>
+            )}
 
-            {/* Table */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                <thead>
-                    <tr style={{ borderTop: '2px solid #000', borderBottom: '1px solid #000' }}>
-                        <th style={{ textAlign: 'left', padding: '8px 0', fontSize: '14px' }}>Sl.</th>
-                        <th style={{ textAlign: 'left', padding: '8px 0', fontSize: '14px' }}>Test Name</th>
-                        <th style={{ textAlign: 'right', padding: '8px 0', fontSize: '14px' }}>Price (₹)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {bill.tests.map((item, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '8px 0', fontSize: '14px' }}>{index + 1}</td>
-                            <td style={{ padding: '8px 0', fontSize: '14px' }}>{item.test.name}</td>
-                            <td style={{ textAlign: 'right', padding: '8px 0', fontSize: '14px' }}>{item.price}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Totals */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '10px' }}>
-                <div style={{ display: 'flex', width: '200px', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Grand Total</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{grandTotal}</span>
+            {printSettings?.footerType === 'text' && printSettings?.footerText && (
+                <div style={{ marginTop: '20px', padding: '10px 40px', textAlign: 'center', borderTop: '1px solid #ccc' }}>
+                    <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{printSettings.footerText}</p>
                 </div>
-                <div style={{ display: 'flex', width: '200px', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Paid</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{bill.paidAmount}</span>
-                </div>
-            </div>
-
-            {/* Footer Signatory */}
-            <div style={{ marginTop: '120px', textAlign: 'right' }}>
-                 <div style={{ display: 'inline-block', textAlign: 'center' }}>
-                    <div style={{ borderTop: '2px solid #000', width: '200px', marginBottom: '5px' }}></div>
-                    <span style={{ fontSize: '14px', fontWeight: 600 }}>Authorized Signatory</span>
-                 </div>
-            </div>
-
+            )}
         </div>
     );
 });

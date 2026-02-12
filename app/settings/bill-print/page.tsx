@@ -4,6 +4,155 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { BillReceipt } from '@/app/components/BillReceipt';
+import Cropper, { Area, Point } from 'react-easy-crop';
+
+interface ImageCropperProps {
+    image: string;
+    onCropComplete: (croppedImage: Blob) => void;
+    onCancel: () => void;
+}
+
+function ImageCropper({ image, onCropComplete, onCancel }: ImageCropperProps) {
+    const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+    const onCropChange = (crop: Point) => setCrop(crop);
+    const onZoomChange = (zoom: number) => setZoom(zoom);
+    const onCropCompleteInternal = (_: Area, croppedAreaPixels: Area) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    };
+
+    const createImage = (url: string): Promise<HTMLImageElement> =>
+        new Promise((resolve, reject) => {
+            const image = new Image();
+            image.addEventListener('load', () => resolve(image));
+            image.addEventListener('error', (error) => reject(error));
+            image.setAttribute('crossOrigin', 'anonymous');
+            image.src = url;
+        });
+
+    async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+        const image = await createImage(imageSrc);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) throw new Error('No 2d context');
+
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+
+        ctx.drawImage(
+            image,
+            pixelCrop.x,
+            pixelCrop.y,
+            pixelCrop.width,
+            pixelCrop.height,
+            0,
+            0,
+            pixelCrop.width,
+            pixelCrop.height
+        );
+
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    reject(new Error('Canvas is empty'));
+                    return;
+                }
+                resolve(blob);
+            }, 'image/jpeg');
+        });
+    }
+
+    const handleSave = async () => {
+        if (!croppedAreaPixels) return;
+        try {
+            const croppedImage = await getCroppedImg(image, croppedAreaPixels);
+            onCropComplete(croppedImage);
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to crop image');
+        }
+    };
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            zIndex: 1100,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+        }}>
+            <div style={{ 
+                position: 'relative', 
+                width: '100%', 
+                maxWidth: '800px', 
+                height: '500px', 
+                background: '#000',
+                borderRadius: '8px',
+                overflow: 'hidden'
+            }}>
+                <Cropper
+                    image={image}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={8 / 2} // Aspect ratio for header (approx wide)
+                    onCropChange={onCropChange}
+                    onCropComplete={onCropCompleteInternal}
+                    onZoomChange={onZoomChange}
+                />
+            </div>
+            
+            <div style={{ 
+                marginTop: '10px', 
+                display: 'flex', 
+                gap: '12px', 
+                width: '100%', 
+                maxWidth: '800px',
+                justifyContent: 'center',
+                background: 'white',
+                padding: '15px',
+                borderRadius: '8px'
+            }}>
+                <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#64748b' }}>Zoom: {zoom.toFixed(1)}x</label>
+                    <input
+                        type="range"
+                        value={zoom}
+                        min={1}
+                        max={3}
+                        step={0.1}
+                        aria-labelledby="Zoom"
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                        style={{ width: '100%' }}
+                    />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                    <button
+                        onClick={onCancel}
+                        style={{ padding: '8px 20px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        style={{ padding: '8px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+                    >
+                        Apply Crop
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function BillPrintSettingsPage() {
     const router = useRouter();
@@ -12,12 +161,17 @@ export default function BillPrintSettingsPage() {
     const [uploading, setUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string>('');
+    const [showCropper, setShowCropper] = useState(false);
+    const [tempFileUrl, setTempFileUrl] = useState('');
+    const [croppingType, setCroppingType] = useState<'header' | 'footer'>('header');
     
     const [settings, setSettings] = useState({
         headerType: 'none' as 'none' | 'text' | 'image',
+        footerType: 'none' as 'none' | 'text' | 'image',
         labName: '',
         labAddress: '',
         headerMargin: 20,
+        footerText: '',
         fontSize: 14,
         headerImageUrl: '',
         footerImageUrl: '',
@@ -61,9 +215,11 @@ export default function BillPrintSettingsPage() {
                 setSettings(prev => ({
                     ...prev,
                     headerType: data.data.headerType || 'none',
+                    footerType: data.data.footerType || 'none',
                     labName: data.data.labName || prev.labName,
                     labAddress: data.data.labAddress || prev.labAddress,
                     headerMargin: data.data.headerMargin || 20,
+                    footerText: data.data.footerText || '',
                     fontSize: data.data.fontSize || 14,
                     headerImageUrl: data.data.headerImageUrl || '',
                     footerImageUrl: data.data.footerImageUrl || '',
@@ -114,12 +270,20 @@ export default function BillPrintSettingsPage() {
         }
     }
 
-    function handleFileSelect(file: File) {
-        setSelectedFile(file);
-        // Create preview URL
+    function handleFileSelect(file: File, type: 'header' | 'footer') {
         const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
+        setTempFileUrl(url);
+        setCroppingType(type);
+        setShowCropper(true);
     }
+
+    const onCropComplete = (croppedImage: Blob) => {
+        const fileName = croppingType === 'header' ? 'header.jpg' : 'footer.jpg';
+        const file = new File([croppedImage], fileName, { type: 'image/jpeg' });
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(croppedImage));
+        setShowCropper(false);
+    };
 
     async function handleImageUpload() {
         if (!selectedFile) {
@@ -134,7 +298,11 @@ export default function BillPrintSettingsPage() {
             
             const data = await api.post('/api/v1/settings/upload', formData);
             if (data.status === 200) {
-                setSettings(prev => ({ ...prev, headerImageUrl: data.data.url }));
+                if (croppingType === 'header') {
+                    setSettings(prev => ({ ...prev, headerImageUrl: data.data.url }));
+                } else {
+                    setSettings(prev => ({ ...prev, footerImageUrl: data.data.url }));
+                }
                 setSelectedFile(null);
                 setPreviewUrl('');
                 toast.success('Image uploaded successfully');
@@ -260,13 +428,13 @@ export default function BillPrintSettingsPage() {
                                 accept="image/*"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
-                                    if (file) handleFileSelect(file);
+                                    if (file) handleFileSelect(file, 'header');
                                 }}
                                 disabled={uploading}
                                 style={{ display: 'block', fontSize: '13px', marginBottom: '8px', width: '100%' }}
                             />
 
-                            {selectedFile && (
+                            {selectedFile && croppingType === 'header' && (
                                 <button
                                     onClick={handleImageUpload}
                                     disabled={uploading}
@@ -284,6 +452,112 @@ export default function BillPrintSettingsPage() {
                                     }}
                                 >
                                     {uploading ? 'UPLOADING...' : 'UPLOAD IMAGE'}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    <hr style={{ margin: '24px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+                    {/* Footer Settings */}
+                    <div style={{ marginBottom: '24px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+                            Footer Type
+                        </label>
+                        <select
+                            value={settings.footerType}
+                            onChange={(e) => setSettings(prev => ({ ...prev, footerType: e.target.value as any }))}
+                            style={{ 
+                                width: '100%', 
+                                padding: '8px', 
+                                borderRadius: '4px', 
+                                border: '1px solid #cbd5e1', 
+                                fontSize: '14px',
+                                background: 'white'
+                            }}
+                        >
+                            <option value="none">No Footer</option>
+                            <option value="text">Footer Text</option>
+                            <option value="image">Footer Image</option>
+                        </select>
+                    </div>
+
+                    {settings.footerType === 'text' && (
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+                                Footer Text
+                            </label>
+                            <textarea
+                                value={settings.footerText}
+                                onChange={(e) => setSettings(prev => ({ ...prev, footerText: e.target.value }))}
+                                placeholder="Enter footer text"
+                                rows={2}
+                                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '14px', resize: 'vertical' }}
+                            />
+                        </div>
+                    )}
+
+                    {settings.footerType === 'image' && (
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+                                Footer Image
+                            </label>
+                            
+                            {settings.footerImageUrl && !selectedFile && (
+                                <div style={{ marginBottom: '8px', padding: '10px', background: '#f8fafc', borderRadius: '4px' }}>
+                                    <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Current Footer:</p>
+                                    <div style={{ overflow: 'hidden', borderRadius: '4px' }}>
+                                        <img 
+                                            src={settings.footerImageUrl} 
+                                            alt="Footer" 
+                                            style={{ width: '100%', height: '80px', objectFit: 'cover', display: 'block' }} 
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedFile && previewUrl && croppingType === 'footer' && (
+                                <div style={{ marginBottom: '8px', padding: '10px', background: '#eff6ff', borderRadius: '4px', border: '2px solid #3b82f6' }}>
+                                    <p style={{ fontSize: '12px', color: '#3b82f6', marginBottom: '4px' }}>Selected Footer (not saved yet):</p>
+                                    <div style={{ overflow: 'hidden', borderRadius: '4px' }}>
+                                        <img 
+                                            src={previewUrl} 
+                                            alt="Preview" 
+                                            style={{ width: '100%', height: '80px', objectFit: 'cover', display: 'block' }} 
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleFileSelect(file, 'footer');
+                                }}
+                                disabled={uploading}
+                                style={{ display: 'block', fontSize: '13px', marginBottom: '8px', width: '100%' }}
+                            />
+
+                            {selectedFile && croppingType === 'footer' && (
+                                <button
+                                    onClick={handleImageUpload}
+                                    disabled={uploading}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px',
+                                        background: '#10b981',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontWeight: 600,
+                                        fontSize: '13px',
+                                        opacity: uploading ? 0.7 : 1
+                                    }}
+                                >
+                                    {uploading ? 'UPLOADING...' : 'UPLOAD FOOTER'}
                                 </button>
                             )}
                         </div>
@@ -394,9 +668,12 @@ export default function BillPrintSettingsPage() {
                             showWatermark={false}
                             printSettings={{
                                 headerType: settings.headerType,
+                                footerType: settings.footerType,
                                 labName: settings.labName,
                                 labAddress: settings.labAddress,
                                 headerImageUrl: settings.headerImageUrl,
+                                footerImageUrl: settings.footerImageUrl,
+                                footerText: settings.footerText,
                                 headerMargin: settings.headerMargin,
                                 fontSize: settings.fontSize,
                                 showWatermark: settings.showWatermark,
@@ -406,6 +683,14 @@ export default function BillPrintSettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {showCropper && (
+                <ImageCropper 
+                    image={tempFileUrl} 
+                    onCropComplete={onCropComplete} 
+                    onCancel={() => setShowCropper(false)} 
+                />
+            )}
         </div>
     );
 }

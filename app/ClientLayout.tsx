@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import Sidebar from "./components/Sidebar";
 import TopHeader from "./components/TopHeader";
 import OfflinePage from "./components/OfflinePage";
+import { Toaster } from 'react-hot-toast';
 
 export default function ClientLayout({
   children,
@@ -37,6 +38,7 @@ export default function ClientLayout({
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
     <div style={{display:'flex', height:'100vh', overflow:'hidden'}}>
+      <Toaster position="top-center" />
       <OfflinePage />
       
       {/* Sidebar: Fixed overlay */}

@@ -7,12 +7,14 @@ export interface IPrintSettings {
 
     // Common settings
     headerType?: 'none' | 'text' | 'image';
+    footerType?: 'none' | 'text' | 'image';
     labName?: string;
     labAddress?: string;
     headerMargin: number;
     fontSize: number;
     headerImageUrl?: string;
     footerImageUrl?: string;
+    footerText?: string;
     showWatermark?: boolean;
     watermarkText?: string;
 
