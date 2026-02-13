@@ -344,16 +344,6 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                                 <div style={{ fontSize: '12px', color: '#333', marginTop: '2px' }}>Pathologist</div>
                                             </div>
                                         )}
-                                        {(printSettings?.showLetterhead1 === false && printSettings?.showLetterhead2 === false) && (
-                                            <>
-                                                <div style={{ textAlign: 'center', minWidth: '180px' }}>
-                                                    <div style={{ fontWeight: 'bold', borderTop: '1.5px solid #000', paddingTop: '8px', fontSize: '14px' }}>Lab Technician</div>
-                                                </div>
-                                                <div style={{ textAlign: 'center', minWidth: '180px' }}>
-                                                    <div style={{ fontWeight: 'bold', borderTop: '1.5px solid #000', paddingTop: '8px', fontSize: '14px' }}>Pathologist</div>
-                                                </div>
-                                            </>
-                                        )}
                                     </div>
                                     <div style={{ textAlign: 'center', fontSize: '11px', color: '#666', marginTop: '10px' }}>
                                         Page {currentPage} of {totalPages}
