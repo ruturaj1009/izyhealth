@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Health Amaze",
-  description: "Lab Management System",
+  title: "Izy Health",
+  description: "Lab Management System By Izycode Ltd",
 };
 
 export default function RootLayout({
