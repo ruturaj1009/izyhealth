@@ -1,4 +1,4 @@
-# X-Pharma Healthcare Management System
+# IzyHealth Healthcare Management System
 
 A modern, full-stack healthcare management application built with **Next.js 16**, **TypeScript**, and **MongoDB**. This system streamlines hospital operations by managing departments, doctors, and patients with a responsive and user-friendly interface.
 
