@@ -80,7 +80,7 @@ export default function BillsPage() {
     };
 
     return (
-        <div style={{ padding: '20px', background: 'linear-gradient(135deg,#e3f2fd,#f7fbff)', minHeight: 'calc(100vh - 60px)' }}>
+        <div style={{ padding: '20px', background: 'linear-gradient(135deg,#e3f2fd,#f7fbff)', minHeight: 'calc(100vh - 52px)' }}>
             <div className={styles.box} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '20px' }}>
                 <div className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1e293b' }}>Bills</h2>

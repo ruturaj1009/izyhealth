@@ -98,5 +98,5 @@ Use the following string values for the `role` field:
 ## Environment Setup
 Ensure you have a `.env.local` file in the root with your MongoDB URI:
 ```
-MONGODB_URI=mongodb://localhost:27017/x-pharma
+MONGODB_URI=mongodb://localhost:27017/izyhealth
 ```

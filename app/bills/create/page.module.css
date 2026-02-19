@@ -1,6 +1,6 @@
 .mainCard {
     background: rgba(255,255,255,.95);
-    margin: 30px auto;
+    margin: 0 auto;
     border-radius: 14px;
     box-shadow: 0 12px 30px rgba(0,0,0,.15);
     animation: fade .6s ease;

@@ -1,12 +1,12 @@
 .header {
-    background: #1565c0; /* Darker blue to match image */
+    background: linear-gradient(to right, hsl(217, 80%, 35%), hsl(217, 70%, 45%));
     color: #fff;
-    height: 60px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 0 32px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -15,35 +15,56 @@
 .left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
 }
 
 .title {
-    font-size: 18px;
-    font-weight: 500;
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #fff;
+    text-decoration: none;
+}
+
+.menuBtnWrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
 
 .menuBtn {
-    display: block;
-    font-size: 20px;
+    font-size: 1.25rem;
     cursor: pointer;
-    padding: 5px; /* Increase hit area */
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.menuBtn:hover {
+    opacity: 1;
 }
 
 .right {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
 }
 
 .searchBar {
-    background: rgba(255,255,255,0.15);
-    padding: 8px 15px;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 20px;
+    border-radius: 9999px; /* Pill shape */
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-width: 250px;
+    gap: 12px;
+    min-width: 320px;
+    transition: background 0.25s, box-shadow 0.25s;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.searchBar:focus-within {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .searchBar input {
@@ -52,41 +73,46 @@
     color: #fff;
     outline: none;
     width: 100%;
-    font-size: 14px;
+    font-size: 0.875rem;
+    font-weight: 400;
 }
+
 .searchBar input::placeholder {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .iconBtn {
     cursor: pointer;
-    font-size: 18px;
+    font-size: 1.125rem;
     position: relative;
-    width: 32px;
-    height: 32px;
-    display: flex; /* Center the icon */
+    width: 36px;
+    height: 36px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: background 0.3s;
+    border-radius: 10px;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .iconBtn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
 }
 
 /* Specific styling for the user profile circle */
 .userProfile {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 1024px) {
+    .searchBar { min-width: 200px; }
 }
 
 @media (max-width: 768px) {
-    .menuBtn {
-        display: block;
-    }
-    .searchBar {
-        display: none; /* Hide search on mobile for simplicity or convert to icon */
-    }
+    .header { padding: 0 16px; }
+    .searchBar { display: none; }
 }
 
 .profileWrapper {
@@ -96,33 +122,34 @@
 
 .dropdownMenu {
     position: absolute;
-    top: 120%; /* Below the icon */
+    top: calc(100% + 12px);
     right: 0;
-    width: 200px;
+    width: 240px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    padding: 8px 0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 8px;
     z-index: 1001;
-    color: #1a1a1a;
-    animation: fadeIn 0.2s ease-out;
+    color: #1e293b;
+    animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #f1f5f9;
 }
 
 .menuHeader {
-    padding: 8px 16px;
+    padding: 12px 12px 8px;
 }
 
 .menuName {
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    font-size: 0.9375rem;
     margin: 0;
-    color: #111;
+    color: #0f172a;
 }
 
 .menuEmail {
-    font-size: 0.8rem;
-    color: #666;
-    margin: 0;
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin: 4px 0 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -130,7 +157,7 @@
 
 .menuDivider {
     height: 1px;
-    background: #e5e7eb;
+    background: #f1f5f9;
     margin: 8px 0;
 }
 
@@ -139,20 +166,22 @@
     text-align: left;
     background: none;
     border: none;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    color: #ef4444; /* Red for logout */
+    padding: 10px 12px;
+    font-size: 0.875rem;
+    color: #ef4444; 
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
+    border-radius: 8px;
 }
 
 .menuItem:hover {
-    background: #f3f4f6;
+    background: #fef2f2;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
+    from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
 }
+

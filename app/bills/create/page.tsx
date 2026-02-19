@@ -303,8 +303,8 @@ export default function CreateBillPage() {
         <div style={{ 
             padding: '20px', 
             background: '#eef6ff', 
-            height: isFixedLayout ? 'calc(100vh - 60px)' : 'auto', 
-            minHeight: 'calc(100vh - 60px)', 
+            height: isFixedLayout ? 'calc(100vh - 52px)' : 'auto', 
+            minHeight: 'calc(100vh - 52px)', 
             overflow: isFixedLayout ? 'hidden' : 'visible', 
             boxSizing: 'border-box' 
         }}>

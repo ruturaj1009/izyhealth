@@ -32,11 +32,21 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
+    // --- REGISTER MODELS ---
+    // Import all models here to ensure they are registered with Mongoose 
+    // before any populate calls are made.
+    require('@/models/User');
+    require('@/models/Department');
+    require('@/models/Test');
+    require('@/models/Bill');
+    require('@/models/Report');
+    require('@/models/Auth');
+
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
       return mongoose;
     });
   }
-  
+
   try {
     cached.conn = await cached.promise;
   } catch (e) {

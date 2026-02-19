@@ -38,4 +38,12 @@ const ReportSchema = new Schema<IReport>({
     impression: { type: String }
 }, { timestamps: true });
 
+// --- INDEXES ---
+ReportSchema.index({ orgid: 1, date: -1 });
+ReportSchema.index({ orgid: 1, status: 1 });
+ReportSchema.index({ orgid: 1, _id: 1 }); // Optimize single report lookup
+ReportSchema.index({ orgid: 1, bill: 1 }); // Optimize lookup by bill ID
+ReportSchema.index({ patient: 1 });
+ReportSchema.index({ doctor: 1 });
+
 export default models.Report || model<IReport>('Report', ReportSchema);

@@ -85,124 +85,152 @@ export default function SignupPage() {
 
     return (
         <div className={styles.container}>
-            <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                    <h2 className={styles.title}>
-                        {isGoogleSignup ? 'Complete Profile' : 'Create Organization'}
-                    </h2>
-                    <p className={styles.subtitle}>
-                        {isGoogleSignup 
-                            ? 'Just a few more details to set up your account.'
-                            : <>
-                                Start your journey with X-Pharma. Already have an account?{' '}
-                                <Link href="/login" className={styles.link}>
-                                    Sign in
-                                </Link>
-                              </>
-                        }
-                    </p>
+            <div className={styles.splitLayout}>
+                {/* Left Side: Impact & Branding */}
+                <div className={styles.visualSide}>
+                    <div className={styles.visualContent}>
+                        <div className={styles.brandBadge}>Join IzyHealth</div>
+                        <h1 className={styles.heroTitle}>Empower Your <br/> Laboratory</h1>
+                        <p className={styles.heroDescription}>
+                            Join hundreds of clinics optimizing their diagnostics workflow with IzyHealth.
+                        </p>
+
+                        <div className={styles.featureList}>
+                            <div className={styles.featureItem}>
+                                <div className={styles.featureIcon}>⚡</div>
+                                <div>
+                                    <h4 className={styles.featureName}>Instant Setup</h4>
+                                    <p className={styles.featureText}>Get your lab digitized in under 5 minutes.</p>
+                                </div>
+                            </div>
+                            <div className={styles.featureItem}>
+                                <div className={styles.featureIcon}>📊</div>
+                                <div>
+                                    <h4 className={styles.featureName}>Advanced Analytics</h4>
+                                    <p className={styles.featureText}>Gain insights into your lab's performance.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.visualGraphics}>
+                            <div className={styles.orb1}></div>
+                            <div className={styles.orb2}></div>
+                        </div>
+                    </div>
                 </div>
-                
-                {/* Step 1: Google Sign Up Button (Only show if not in Step 2) */}
-                {!isGoogleSignup && (
-                    <div style={{marginBottom: '2rem'}}>
-                        <div style={{display: 'flex', justifyContent: 'center'}}>
-                            <GoogleLogin
-                                onSuccess={handleGoogleSuccess}
-                                onError={() => toast.error('Google Signup Failed')}
-                                text="signup_with"
-                                width="300"
-                            />
+
+                {/* Right Side: Auth Form */}
+                <div className={styles.formSide}>
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>
+                            <h2 className={styles.title}>
+                                {isGoogleSignup ? 'Complete Profile' : 'Create Organization'}
+                            </h2>
+                            <p className={styles.subtitle}>
+                                {isGoogleSignup 
+                                    ? 'Just a few more details to set up your account.'
+                                    : <>
+                                        Already have an account?{' '}
+                                        <Link href="/login" className={styles.link}>
+                                            Sign in
+                                        </Link>
+                                      </>
+                                }
+                            </p>
                         </div>
-                        <div className={styles.divider}>
-                            <span>OR</span>
-                        </div>
+                        
+                        {!isGoogleSignup && (
+                            <div style={{marginBottom: '2rem'}}>
+                                <div style={{display: 'flex', justifyContent: 'center', marginBottom: '1.5rem'}}>
+                                    <div className={styles.googleBtnWrapper}>
+                                        <GoogleLogin
+                                            onSuccess={handleGoogleSuccess}
+                                            onError={() => toast.error('Google Signup Failed')}
+                                            text="signup_with"
+                                            width="100%"
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.divider}>
+                                    <span>OR REGISTER MANUALLY</span>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <form className={styles.form} onSubmit={handleSubmit}>
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="org-name" className={styles.label}>Organization Name</label>
+                                <input
+                                    id="org-name"
+                                    name="organizationName"
+                                    type="text"
+                                    required
+                                    className={styles.input}
+                                    placeholder="My Clinic"
+                                    value={formData.organizationName}
+                                    onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
+                                />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="email" className={styles.label}>Email Address</label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    required
+                                    disabled={isGoogleSignup} 
+                                    className={styles.input}
+                                    placeholder="admin@myclinic.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    style={isGoogleSignup ? {backgroundColor: '#f1f5f9', cursor: 'not-allowed'} : {}}
+                                />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="phone" className={styles.label}>Phone Number</label>
+                                <input
+                                    id="phone"
+                                    name="phone"
+                                    type="tel"
+                                    required
+                                    className={styles.input}
+                                    placeholder="+1 (555) 000-0000"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="address" className={styles.label}>Organization Address</label>
+                                <input
+                                    id="address"
+                                    name="address"
+                                    type="text"
+                                    required
+                                    className={styles.input}
+                                    placeholder="123 Health St, City"
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={styles.button}
+                            >
+                                {loading ? 'Creating Account...' : 'Create Account'}
+                            </button>
+
+                            <div className={styles.footerNote}>
+                                <p>Your account will be pending admin approval.</p>
+                                {!isGoogleSignup && <p>Default password will be sent to your email.</p>}
+                            </div>
+                        </form>
                     </div>
-                )}
-                
-                <form className={styles.form} onSubmit={handleSubmit}>
-
-                     {/* Manual Signup form is always visible effectively, 
-                        but we guide user to use Google first or fill manual. 
-                        Actually requirements say: "after user does google signup ask... questions"
-                        So if NOT google signup, we show full form? 
-                        User said "Can you add google login and signup ALSO". 
-                        Meaning manual signup should still exist? 
-                        Assuming YES. 
-                     */}
-
-                    <div className={styles.inputGroup}>
-                        <label htmlFor="org-name" className={styles.label}>Organization Name</label>
-                        <input
-                            id="org-name"
-                            name="organizationName"
-                            type="text"
-                            required
-                            className={styles.input}
-                            placeholder="My Clinic"
-                            value={formData.organizationName}
-                            onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-                        />
-                    </div>
-
-                    <div className={styles.inputGroup}>
-                        <label htmlFor="email" className={styles.label}>Email Address</label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            autoComplete="email"
-                            required
-                            disabled={isGoogleSignup} // Disable if from Google
-                            className={styles.input}
-                            placeholder="admin@myclinic.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            style={isGoogleSignup ? {backgroundColor: '#e5e7eb', cursor: 'not-allowed'} : {}}
-                        />
-                    </div>
-
-                    <div className={styles.inputGroup}>
-                        <label htmlFor="phone" className={styles.label}>Phone Number</label>
-                        <input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            required
-                            className={styles.input}
-                            placeholder="+1 (555) 000-0000"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        />
-                    </div>
-
-                    <div className={styles.inputGroup}>
-                        <label htmlFor="address" className={styles.label}>Organization Address</label>
-                        <input
-                            id="address"
-                            name="address"
-                            type="text"
-                            required
-                            className={styles.input}
-                            placeholder="123 Health St, City"
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={styles.button}
-                    >
-                        {loading ? 'Creating Account...' : 'Create Account'}
-                    </button>
-
-                    <div style={{marginTop: '1rem', fontSize: '0.85rem', color: '#666', textAlign: 'center'}}>
-                        <p>Note: Your account will be pending admin approval.</p>
-                        {!isGoogleSignup && <p>Default password will be sent to your email.</p>}
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     );
