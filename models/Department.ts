@@ -21,6 +21,10 @@ const DepartmentSchema: Schema<IDepartment> = new Schema(
     }
 );
 
-// Standard singleton pattern is sufficient
+// --- INDEXES ---
+DepartmentSchema.index({ orgid: 1, _id: 1 }); // Optimize single department lookup
+DepartmentSchema.index({ orgid: 1, name: 1 });
 
-export const Department = mongoose.models.Department || mongoose.model<IDepartment>('Department', DepartmentSchema);
+const Department = mongoose.models.Department || mongoose.model<IDepartment>('Department', DepartmentSchema);
+export { Department };
+export default Department;

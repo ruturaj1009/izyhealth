@@ -304,7 +304,7 @@ export default function ReportPrintSettingsPage() {
                     footerImageUrl: data.data.footerImageUrl || '',
                     footerText: data.data.footerText || '',
                     showWatermark: data.data.showWatermark !== undefined ? data.data.showWatermark : true,
-                    watermarkText: data.data.watermarkText || 'Health Amaze Demo Account',
+                    watermarkText: data.data.watermarkText || 'Rutu Dev Labs',
                     letterhead1Name: data.data.letterhead1Name || '',
                     letterhead1SignatureUrl: data.data.letterhead1SignatureUrl || '',
                     showLetterhead1: data.data.showLetterhead1 !== undefined ? data.data.showLetterhead1 : true,

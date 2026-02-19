@@ -76,12 +76,12 @@ export default function TopHeader({ onMenuClick, onMenuHover }: Props) {
                 <div 
                     onMouseEnter={onMenuHover} 
                     onClick={onMenuClick}
-                    style={{display:'flex', alignItems:'center', cursor: 'pointer'}}
+                    className={styles.menuBtnWrapper}
                 >
                     <i className={`fa fa-bars ${styles.menuBtn}`}></i>
                 </div>
-                <Link href="/" className={styles.title} style={{marginLeft:'15px', textDecoration:'none', color:'inherit'}}>
-                    X Pharma | {labName}
+                <Link href="/" className={styles.title}>
+                    IzyHealth | {labName}
                 </Link>
             </div>
 

@@ -94,80 +94,100 @@ export default function LoginPage() {
 
     return (
         <div className={styles.container}>
-            <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                    <h2 className={styles.title}>Welcome Back</h2>
-                    <p className={styles.subtitle}>
-                        Sign in to <strong>X-Pharma</strong> or{' '}
-                        <Link href="/signup" className={styles.link}>
-                            create an organization
-                        </Link>
-                    </p>
-                </div>
-                
-                <form className={styles.form} onSubmit={handleSubmit}>
-                    {error && (
-                        <div className={styles.errorBox}>
-                           {error}
+            <div className={styles.splitLayout}>
+                {/* Left Side: Branding & Aesthetics */}
+                <div className={styles.visualSide}>
+                    <div className={styles.visualContent}>
+                        <div className={styles.brandBadge}>IzyHealth</div>
+                        <h1 className={styles.heroTitle}>Smart Pathology <br/> Management</h1>
+                        <p className={styles.heroDescription}>
+                            Experience the future of laboratory diagnostics with our precision-driven platform.
+                        </p>
+                        <div className={styles.visualGraphics}>
+                            <div className={styles.orb1}></div>
+                            <div className={styles.orb2}></div>
                         </div>
-                    )}
-                    
-                    <div className={styles.inputGroup}>
-                        <label htmlFor="email" className={styles.label}>Email Address</label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            required
-                            className={styles.input}
-                            placeholder="name@company.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
                     </div>
+                </div>
 
-                    <div className={styles.inputGroup}>
-                        <label htmlFor="password" className={styles.label}>Password</label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            required
-                            className={styles.input}
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        />
-                    </div>
+                {/* Right Side: Auth Form */}
+                <div className={styles.formSide}>
+                    <div className={styles.card}>
+                        <div className={styles.cardHeader}>
+                            <h2 className={styles.title}>Welcome Back</h2>
+                            <p className={styles.subtitle}>
+                                New to IzyHealth?{' '}
+                                <Link href="/signup" className={styles.link}>
+                                    Create organization
+                                </Link>
+                            </p>
+                        </div>
+                        
+                        <form className={styles.form} onSubmit={handleSubmit}>
+                            {error && (
+                                <div className={styles.errorBox}>
+                                   {error}
+                                </div>
+                            )}
+                            
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="email" className={styles.label}>Email Address</label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    required
+                                    className={styles.input}
+                                    placeholder="name@company.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={styles.button}
-                    >
-                        {loading ? 'Signing in...' : 'Sign In'}
-                    </button>
-                    
-                    <div className={styles.divider}>
-                        <span>OR</span>
-                    </div>
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="password" className={styles.label}>Password</label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    required
+                                    className={styles.input}
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                />
+                            </div>
 
-                    <div style={{display: 'flex', justifyContent: 'center'}}>
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={() => {
-                                console.log('Login Failed');
-                                setError('Google Login Failed');
-                            }}
-                        />
-                    </div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={styles.button}
+                            >
+                                {loading ? 'Signing in...' : 'Sign In'}
+                            </button>
+                            
+                            <div className={styles.divider}>
+                                <span>OR CONTINUE WITH</span>
+                            </div>
 
-                    <div style={{textAlign: 'center', marginTop: '1rem'}}>
-                         <p style={{fontSize: '0.85rem', color: '#666'}}>
-                            Forgot password? <a href="#" className={styles.link}>Contact Admin</a>
-                         </p>
+                            <div style={{display: 'flex', justifyContent: 'center'}}>
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => {
+                                        console.log('Login Failed');
+                                        setError('Google Login Failed');
+                                    }}
+                                />
+                            </div>
+
+                            <div className={styles.footerLinks}>
+                                 <p>
+                                    Forgot password? <a href="#" className={styles.link}>Contact Admin</a>
+                                 </p>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );

@@ -38,7 +38,7 @@ A modern, full-stack healthcare management application built with **Next.js 16**
 1.  **Clone the repository**:
     ```bash
     git clone <repository-url>
-    cd x-pharma
+    cd izyhealth
     ```
 
 2.  **Install dependencies**:
@@ -49,7 +49,7 @@ A modern, full-stack healthcare management application built with **Next.js 16**
 3.  **Environment Setup**:
     Create a `.env.local` file in the root directory and add your MongoDB connection string:
     ```env
-    MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/x-pharma
+    MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/izyhealth
     ```
 
 4.  **Run Development Server**:

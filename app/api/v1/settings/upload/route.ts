@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
         // Upload to Cloudinary
         const result = await cloudinary.uploader.upload(dataURI, {
-            folder: 'x-pharma/print-settings',
+            folder: 'izyhealth/print-settings',
             resource_type: 'auto'
         });
 

@@ -26,6 +26,11 @@ const UserSchema: Schema<IUser> = new Schema(
     }
 );
 
+// --- INDEXES ---
+UserSchema.index({ orgid: 1, role: 1 });
+UserSchema.index({ orgid: 1, mobile: 1 }, { sparse: true });
+UserSchema.index({ orgid: 1, firstName: 1, lastName: 1 });
+
 // Prevent overwrite during hot reload
 export const User = (mongoose.models.User as Model<IUser>) || mongoose.model<IUser>('User', UserSchema);
 

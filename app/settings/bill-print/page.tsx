@@ -224,9 +224,9 @@ export default function BillPrintSettingsPage() {
                     headerImageUrl: data.data.headerImageUrl || '',
                     footerImageUrl: data.data.footerImageUrl || '',
                     showWatermark: data.data.showWatermark !== undefined ? data.data.showWatermark : true,
-                    watermarkText: data.data.watermarkText || 'Health Amaze Demo Account'
+                    watermarkText: data.data.watermarkText || 'Rutu Dev Labs'
                 }));
-            }
+            } 
         } catch (err) {
             console.error(err);
             toast.error('Failed to load settings');

@@ -43,6 +43,14 @@ const BillSchema = new Schema<IBill>({
 
 }, { timestamps: true });
 
+// --- INDEXES ---
+BillSchema.index({ orgid: 1, createdAt: -1 });
+BillSchema.index({ orgid: 1, status: 1 });
+BillSchema.index({ orgid: 1, _id: 1 }); // Optimize single bill lookup
+BillSchema.index({ patient: 1 });
+BillSchema.index({ doctor: 1 });
+BillSchema.index({ "tests.test": 1 });
+
 // Check logic for Pre-save to auto-calc due amount or status if needed? 
 // For now, trust frontend/API to calculate correct values or perform simple check.
 

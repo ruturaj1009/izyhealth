@@ -68,7 +68,7 @@ export default function CreateDoctorPage() {
     };
 
     return (
-        <div style={{ padding: '20px', background: '#eaf6ff', minHeight: 'calc(100vh - 60px)' }}>
+        <div style={{ padding: '20px', background: '#eaf6ff', minHeight: 'calc(100vh - 52px)' }}>
             <div className={styles.formBox}>
                 <form onSubmit={handleSubmit}>
                     {/* BASIC DETAILS */}

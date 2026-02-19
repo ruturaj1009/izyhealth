@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { Department } from '@/models/Department';
 import { authorize } from '@/lib/auth';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/x-pharma';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/izyhealth';
 
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;

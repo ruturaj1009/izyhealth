@@ -11,7 +11,7 @@
     /* Layout Fix */
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 100px); /* Adjust based on parent padding/navbar */
+    height: calc(100vh - 52px); /* Adjusted for 52px TopHeader */
 }
 
 /* HEADER */

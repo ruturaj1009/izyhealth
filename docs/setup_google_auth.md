@@ -5,13 +5,13 @@ To enable "Sign in with Google", you need to create a project in the Google Clou
 ## Step 1: Create a Project
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
 2. Click the project dropdown (top left) and select **New Project**.
-3. Name it (e.g., "Health Amaze Auth") and click **Create**.
+3. Name it (e.g., "IzyHealth Auth") and click **Create**.
 
 ## Step 2: Configure OAuth Consent Screen
 1. In the left sidebar, navigate to **APIs & Services** > **OAuth consent screen**.
 2. Select **External** (unless you have a Google Workspace organization) and click **Create**.
 3. **App Information**:
-   - **App Name**: Health Amaze
+   - **App Name**: IzyHealth
    - **User Support Email**: Select your email.
 4. **Developer Contact Information**: Enter your email.
 5. Click **Save and Continue** through the remaining steps (Scopes, Test Users). 
@@ -21,13 +21,13 @@ To enable "Sign in with Google", you need to create a project in the Google Clou
 1. Navigate to **APIs & Services** > **Credentials**.
 2. Click **Create Credentials** (top bar) > **OAuth client ID**.
 3. **Application Type**: Select **Web application**.
-4. **Name**: `Health Amaze Web Client`.
+4. **Name**: `IzyHealth Web Client`.
 5. **Authorized JavaScript Origins**:
    - Add: `http://localhost:3000`
-   - Add: `https://x-pharma.vercel.app` (Your production URL)
+   - Add: `https://izyhealth.vercel.app` (Your production URL)
 6. **Authorized Redirect URIs**:
    - Add: `http://localhost:3000`
-   - Add: `https://x-pharma.vercel.app`
+   - Add: `https://izyhealth.vercel.app`
 7. Click **Create**.
 
 ## Step 4: Get Key

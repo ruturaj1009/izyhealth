@@ -169,7 +169,7 @@ export default function TestsPage() {
     );
 
     return (
-        <div style={{ padding: '20px', background: 'linear-gradient(135deg,#eaf6ff,#f7fbff)', minHeight: 'calc(100vh - 60px)' }}>
+        <div style={{ padding: '20px', background: 'linear-gradient(135deg,#eaf6ff,#f7fbff)', minHeight: 'calc(100vh - 52px)' }}>
             <div className={styles.container}>
                 <div className={styles.header}>
                     <div className={styles.headerTitle}>All Departments</div>

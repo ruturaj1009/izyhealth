@@ -42,6 +42,10 @@ const AuthSchema: Schema<IAuth> = new Schema(
     }
 );
 
+// --- INDEXES ---
+AuthSchema.index({ refreshToken: 1 }, { sparse: true });
+AuthSchema.index({ orgid: 1 });
+
 // Force model recompilation in dev to apply schema changes
 if (process.env.NODE_ENV !== 'production') {
     delete mongoose.models.Auth;

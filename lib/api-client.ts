@@ -31,7 +31,10 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
     if (response.status === 401) {
         // Attempt Refresh
         try {
-            const refreshRes = await fetch('/api/auth/refresh', { method: 'POST' });
+            const refreshRes = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include'
+            });
             if (refreshRes.ok) {
                 const data = await refreshRes.json();
                 if (data.accessToken) {
@@ -52,6 +55,9 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
             } else {
                 // Refresh failed - redirect to logic
                 if (typeof window !== 'undefined') {
+                    console.error("Token refresh failed with status:", refreshRes.status);
+                    const errorData = await refreshRes.json().catch(() => ({}));
+                    console.error("Refresh error details:", errorData);
                     // Optional: clear local storage
                     // localStorage.removeItem('token');
                     // window.location.href = '/login'; 

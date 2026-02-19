@@ -51,4 +51,11 @@ const TestSchema = new Schema<ITest>({
 
 }, { timestamps: true });
 
+// --- INDEXES ---
+TestSchema.index({ orgid: 1, type: 1 });
+TestSchema.index({ orgid: 1, department: 1 });
+TestSchema.index({ orgid: 1, name: 1 });
+TestSchema.index({ orgid: 1, _id: 1 }); // Optimize single test lookup
+TestSchema.index({ parentGroup: 1 });
+
 export default models.Test || model<ITest>('Test', TestSchema);

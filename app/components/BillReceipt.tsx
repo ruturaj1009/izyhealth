@@ -194,7 +194,7 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
                             />
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                  <QRCodeSVG 
-                                    value={`${process.env.NEXT_PUBLIC_APP_URL || 'https://x-pharma.vercel.app'}/bills/${bill._id}/view`} 
+                                    value={`${process.env.NEXT_PUBLIC_APP_URL || 'https://izyhealth.vercel.app'}/bills/${bill._id}/view`} 
                                     size={50} 
                                 />
                                  <div style={{ fontSize: '9px', marginTop: '2px', color: '#666' }}>Scan to View</div>

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Test from '@/models/Test';
-import { Department } from '@/models/Department'; // Ensure Department is registered
 import { authorize } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
