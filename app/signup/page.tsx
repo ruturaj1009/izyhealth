@@ -59,7 +59,15 @@ export default function SignupPage() {
                 body: JSON.stringify(payload)
             });
 
-            const data = await res.json();
+            const text = await res.text();
+            let data: any = {};
+            try {
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    data = JSON.parse(text);
+                }
+            } catch (e) {
+                console.error('Failed to parse registration JSON:', e);
+            }
 
             if (!res.ok) {
                 throw new Error(data.error || 'Registration failed');

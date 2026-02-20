@@ -117,6 +117,16 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
         if (!name.trim()) return toast.error('Test Name is required');
         if (price < 0) return toast.error('Price must be positive');
 
+        if (testType === 'normal') {
+            for (let i = 0; i < referenceRanges.length; i++) {
+                const range = referenceRanges[i];
+                if (range.min && range.max && Number(range.max) <= Number(range.min)) {
+                    const label = range.name ? `"${range.name}"` : `#${i + 1}`;
+                    return toast.error(`Reference Range ${label}: Max value must be greater than Min value`);
+                }
+            }
+        }
+
         setSubmitting(true);
         try {
             const payload: any = {

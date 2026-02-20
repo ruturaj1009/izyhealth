@@ -2,6 +2,23 @@ import React from 'react';
 import { IReport } from '@/types/report';
 import { QRCodeSVG } from 'qrcode.react';
 
+interface CustomSpacing {
+    topMargin?: number;
+    headerMargin?: number;
+    contentPadding?: number;
+    patientInfoMargin?: number;
+    tableSpacing?: number;
+    signatureTopPadding?: number;
+    footerMargin?: number;
+}
+
+interface PrintOverrides {
+    showLetterhead1?: boolean;
+    showLetterhead2?: boolean;
+    showWatermark?: boolean;
+    watermarkText?: string;
+}
+
 interface ReportPrintProps {
     report: any;
     printSettings?: {
@@ -23,9 +40,12 @@ interface ReportPrintProps {
         letterhead2Name?: string;
         letterhead2SignatureUrl?: string;
     };
+    customSpacing?: CustomSpacing;
+    overrides?: PrintOverrides;
+    paperSize?: string;
 }
 
-export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({ report, printSettings }, ref) => {
+export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({ report, printSettings, customSpacing, overrides, paperSize }, ref) => {
     
     // Helper function to format date
     const formatDate = (dateStr: string) => {
@@ -50,10 +70,36 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
     const totalPages = allResults.length;
     const fontSize = printSettings?.fontSize || 14;
 
+    // Resolved spacing values (custom overrides > defaults)
+    const sp = {
+        topMargin: customSpacing?.topMargin ?? 0,
+        headerMargin: customSpacing?.headerMargin ?? (printSettings?.headerMargin || 10),
+        contentPadding: customSpacing?.contentPadding ?? 40,
+        patientInfoMargin: customSpacing?.patientInfoMargin ?? 20,
+        tableSpacing: customSpacing?.tableSpacing ?? 20,
+        signatureTopPadding: customSpacing?.signatureTopPadding ?? 40,
+        footerMargin: customSpacing?.footerMargin ?? 0,
+    };
+
+    // Resolved overrides (per-report > global settings)
+    const showSig1 = overrides?.showLetterhead1 ?? (printSettings?.showLetterhead1 !== false);
+    const showSig2 = overrides?.showLetterhead2 ?? (printSettings?.showLetterhead2 !== false);
+    const showWatermark = overrides?.showWatermark ?? (printSettings?.showWatermark ?? true);
+    const watermarkText = overrides?.watermarkText ?? printSettings?.watermarkText ?? 'Health Amaze Demo Account';
+
+    // Paper size mapping for @page CSS
+    const pageSizeMap: Record<string, string> = {
+        A4: 'A4',
+        A5: 'A5',
+        Letter: 'letter',
+        Legal: 'legal',
+    };
+    const pageSize = paperSize ? pageSizeMap[paperSize] || 'auto' : 'auto';
+
     return (
         <div ref={ref} className="report-print-container" style={{ 
             width: '100%',
-            maxWidth: '800px',
+            maxWidth: '800px', 
             margin: '0 auto', 
             background: 'white', 
             fontFamily: 'Arial, sans-serif',
@@ -65,18 +111,30 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
             minHeight: '100vh',
             boxSizing: 'border-box'
         }}>
-
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style>{`
                 @media print {
                     @page {
-                        margin: 0;
-                        size: A4;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        size: ${pageSize};
                     }
-                    body {
-                        margin: 0;
+                    @page :first {
+                        margin: 0 !important;
+                    }
+                    @page :left {
+                        margin: 0 !important;
+                    }
+                    @page :right {
+                        margin: 0 !important;
+                    }
+                    html, body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
                         -webkit-print-color-adjust: exact;
                     }
                     .report-print-container {
+                        width: 100% !important;
                         max-width: 100% !important;
                         margin: 0 !important;
                         padding: 0 !important;
@@ -84,6 +142,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                     }
                     .report-page {
                         padding: 0 !important;
+                        margin: 0 !important;
                         width: 100% !important;
                         min-height: 100vh !important;
                         display: flex !important;
@@ -93,11 +152,23 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                     .report-page:last-child {
                         page-break-after: auto !important;
                     }
+                    .report-header-img,
+                    .report-footer-img {
+                        width: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        display: block !important;
+                    }
+                    .report-header-img img,
+                    .report-footer-img img {
+                        width: 100% !important;
+                        display: block !important;
+                    }
                 }
                 .rte-content table { width: 100%; border-collapse: collapse; margin-top: 5px; margin-bottom: 5px; }
                 .rte-content th, .rte-content td { border: 1px solid #ccc; padding: 4px; text-align: left; }
                 .rte-content th { background-color: #f1f1f1; font-weight: bold; }
-            ` }} />
+            `}</style>
             
             {allResults.map((result, index) => {
                 const currentPage = index + 1;
@@ -134,21 +205,24 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                         flexDirection: 'column',
                         flex: 1
                     }}>
+                        {/* Top Margin */}
+                        {sp.topMargin > 0 && <div style={{ height: `${sp.topMargin}px` }} />}
+
                         {/* Watermark */}
-                        {(printSettings?.showWatermark ?? true) && (
+                        {showWatermark && (
                             <div style={{
                                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%) rotate(-45deg)',
                                 fontSize: '60px', color: 'rgba(0, 0, 0, 0.05)', pointerEvents: 'none', whiteSpace: 'nowrap', fontWeight: 'bold', zIndex: 0,
                                 textAlign: 'center', width: '100%'
                             }}>
-                                {printSettings?.watermarkText || 'Health Amaze Demo Account'}
+                                {watermarkText}
                             </div>
                         )}
 
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1, width: '100%' }}>
                             {/* Header Section */}
                             {(printSettings?.headerType === 'text') && (
-                                <div style={{ textAlign: 'center', marginBottom: `${printSettings?.headerMargin || 10}px`, padding: '20px' }}>
+                                <div style={{ textAlign: 'center', marginBottom: `${sp.headerMargin}px`, padding: '0' }}>
                                     <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0', color: '#000' }}>{printSettings?.labName || 'Raj Labs'}</h1>
                                     <p style={{ fontSize: '14px', margin: '5px 0', color: '#333' }}>{printSettings?.labAddress || 'Balasore'}</p>
                                     <div style={{ borderBottom: '1.5px solid #000', margin: '15px 0' }}></div>
@@ -156,19 +230,17 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                             )}
 
                             {printSettings?.headerType === 'image' && printSettings.headerImageUrl && (
-                                <div style={{ marginBottom: `${printSettings.headerMargin || 10}px` }}>
-                                    <div style={{ overflow: 'hidden' }}>
-                                        <img 
-                                            src={printSettings.headerImageUrl} 
-                                            alt="Header" 
-                                            style={{ 
-                                                width: '100%', 
-                                                height: 'auto', 
-                                                display: 'block'
-                                            }} 
-                                        />
-                                    </div>
-                                    <div style={{ borderBottom: '1px solid #ccc', margin: '15px 0' }}></div>
+                                <div className="report-header-img" style={{ marginBottom: `${sp.headerMargin}px`, padding: '0', width: '100%' }}>
+                                    <img 
+                                        src={printSettings.headerImageUrl} 
+                                        alt="Header" 
+                                        style={{ 
+                                            width: '100%', 
+                                            height: 'auto', 
+                                            display: 'block'
+                                        }} 
+                                    />
+                                    <div style={{ borderBottom: '1px solid #ccc', margin: '10px 0', width: '100%' }}></div>
                                 </div>
                             )}
 
@@ -177,9 +249,9 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                             )}
 
                             {/* Padded Content Wrapper */}
-                            <div style={{ padding: '0 40px 40px 40px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ padding: `0 ${sp.contentPadding}px ${sp.contentPadding}px ${sp.contentPadding}px`, flex: 1, display: 'flex', flexDirection: 'column' }}>
                                 {/* Patient Meta Bar */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #000', paddingBottom: '10px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: `${sp.patientInfoMargin}px`, borderBottom: '1px solid #000', paddingBottom: '10px' }}>
                                     <div style={{ flex: 2 }}>
                                         <div style={{ display: 'flex', marginBottom: '4px' }}>
                                             <span style={{ width: '80px', fontWeight: 'bold' }}>Name:</span>
@@ -236,7 +308,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                         </div>
                                     )}
 
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: `${sp.tableSpacing}px` }}>
                                         <thead>
                                             <tr style={{ borderBottom: '1.5px solid #000' }}>
                                                 <th style={{ textAlign: 'left', padding: '8px 5px', width: '35%' }}>Test Name</th>
@@ -258,7 +330,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                                             else if (r.min) val = `> ${r.min}`;
                                                             else if (r.max) val = `< ${r.max}`;
                                                             return r.name ? `${r.name}: ${val}` : val;
-                                                        }).filter(Boolean).join(', ');
+                                                        }).filter(Boolean).join('<br/>');
                                                 }
 
                                                 const paddingLeft = (row.level || 0) * 20 + 5;
@@ -283,7 +355,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                                             {rIsDescriptive ? '' : row.resultValue}
                                                         </td>
                                                         <td style={{ padding: '8px 5px', verticalAlign: 'top', color: '#444' }}>
-                                                                {rIsDescriptive ? '' : displayRefRange}
+                                                                {rIsDescriptive ? '' : displayRefRange ? <span dangerouslySetInnerHTML={{ __html: displayRefRange }} /> : ''}
                                                         </td>
                                                         <td style={{ padding: '8px 5px', verticalAlign: 'top', color: '#444' }}>
                                                                 {rIsDescriptive ? '' : (row.unit || rTestDef.unit)}
@@ -324,9 +396,9 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                 </div>
 
                                 {/* Signatures and Signatory Block */}
-                                <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                                <div style={{ marginTop: 'auto', paddingTop: `${sp.signatureTopPadding}px` }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: '15px', gap: '40px' }}>
-                                        {(printSettings?.showLetterhead1 !== false) && (
+                                        {showSig1 && (
                                             <div style={{ textAlign: 'center', minWidth: '180px' }}>
                                                 {printSettings?.letterhead1SignatureUrl && (
                                                     <img src={printSettings.letterhead1SignatureUrl} alt="Signature 1" style={{ maxHeight: '40px', marginBottom: '8px', mixBlendMode: 'multiply' }} />
@@ -335,7 +407,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                                 <div style={{ fontSize: '12px', color: '#333', marginTop: '2px' }}>Lab Technician</div>
                                             </div>
                                         )}
-                                        {(printSettings?.showLetterhead2 !== false) && (
+                                        {showSig2 && (
                                             <div style={{ textAlign: 'center', minWidth: '180px' }}>
                                                 {printSettings?.letterhead2SignatureUrl && (
                                                     <img src={printSettings.letterhead2SignatureUrl} alt="Signature 2" style={{ maxHeight: '40px', marginBottom: '8px', mixBlendMode: 'multiply' }} />
@@ -358,19 +430,20 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                         </div>
 
                         {/* Footer Rendering */}
+                        {sp.footerMargin > 0 && <div style={{ height: `${sp.footerMargin}px` }} />}
                         {printSettings?.footerType === 'image' && printSettings?.footerImageUrl && (
-                            <div style={{ width: '100%' }}>
+                            <div className="report-footer-img" style={{ width: '100%', padding: '0', margin: '0' }}>
                                 <div style={{ borderTop: '1px solid #eee', width: '100%' }}></div>
                                 <img 
                                     src={printSettings.footerImageUrl} 
                                     alt="Footer" 
-                                    style={{ width: '100%', height: 'auto', display: 'block' }} 
+                                    style={{ width: '100%', height: 'auto', display: 'block', margin: '0' }} 
                                 />
                             </div>
                         )}
 
                         {printSettings?.footerType === 'text' && printSettings?.footerText && (
-                            <div style={{ padding: '15px 40px', textAlign: 'center', borderTop: '1.5px solid #000' }}>
+                            <div style={{ padding: '10px 0', textAlign: 'center', borderTop: '1.5px solid #000' }}>
                                 <p style={{ fontSize: '12px', color: '#000', margin: 0, lineHeight: '1.4' }}>{printSettings.footerText}</p>
                             </div>
                         )}

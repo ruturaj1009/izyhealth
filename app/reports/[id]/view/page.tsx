@@ -67,7 +67,16 @@ export default function PatientReportViewPage() {
     async function fetchPrintSettings(orgid: number) {
         try {
             const res = await fetch(`/api/v1/public/settings/print?type=report&orgid=${orgid}`);
-            const data = await res.json();
+            const text = await res.text();
+            let data: any = {};
+            try {
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    data = JSON.parse(text);
+                }
+            } catch (e) {
+                console.error('Failed to parse print settings JSON:', e);
+            }
+            
             if (data.status === 200) {
                 setPrintSettings(data.data);
             }
@@ -79,7 +88,16 @@ export default function PatientReportViewPage() {
     async function fetchReport(id: string) {
         try {
             const res = await fetch(`/api/v1/public/reports/${id}`);
-            const data = await res.json();
+            const text = await res.text();
+            let data: any = {};
+            try {
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    data = JSON.parse(text);
+                }
+            } catch (e) {
+                console.error('Failed to parse report JSON:', e);
+            }
+
             if (data.status === 200) {
                 setReport(data.data);
                 if (data.data.orgid) {
