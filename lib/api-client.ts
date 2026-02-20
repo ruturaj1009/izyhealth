@@ -36,7 +36,7 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
                 credentials: 'include'
             });
             if (refreshRes.ok) {
-                const data = await refreshRes.json();
+                const data = await refreshRes.json().catch(() => ({}));
                 if (data.accessToken) {
                     // Update Local Storage
                     localStorage.setItem('token', data.accessToken);
@@ -68,8 +68,32 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
         }
     }
 
-    const data = await response.json();
-    return data;
+    const data = await response.text();
+
+    try {
+        // Only try to parse if there's content and it looks like it could be JSON
+        if (data && (data.startsWith('{') || data.startsWith('['))) {
+            return JSON.parse(data);
+        }
+
+        // If it's not JSON but request was OK, return as text or null
+        if (response.ok) return data;
+
+        // If request failed and we got something else (like HTML), throw clear error
+        console.error(`API Error [${response.status}] at ${url}:`, data.substring(0, 100));
+        return {
+            status: response.status,
+            error: `Server returned non-JSON response (${response.status})`,
+            details: data.substring(0, 100)
+        };
+    } catch (err) {
+        console.error(`Failed to parse JSON for ${url}:`, err);
+        return {
+            status: response.status,
+            error: "Failed to parse server response",
+            details: data.substring(0, 100)
+        };
+    }
 }
 
 export const api = {

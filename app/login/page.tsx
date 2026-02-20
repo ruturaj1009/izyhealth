@@ -24,8 +24,15 @@ export default function LoginPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idToken: credentialResponse.credential })
             });
-            
-            const data = await res.json();
+            const text = await res.text();
+            let data: any = {};
+            try {
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    data = JSON.parse(text);
+                }
+            } catch (e) {
+                console.error('Failed to parse Google login JSON:', e);
+            }
 
             if (!res.ok) {
                 if (res.status === 404) {
@@ -67,8 +74,15 @@ export default function LoginPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-
-            const data = await res.json();
+            const text = await res.text();
+            let data: any = {};
+            try {
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    data = JSON.parse(text);
+                }
+            } catch (e) {
+                console.error('Failed to parse login JSON:', e);
+            }
 
             if (!res.ok) {
                 throw new Error(data.error || 'Login failed');
