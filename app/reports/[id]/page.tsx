@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Fragment, useRef } from 'react';
+import { useState, useEffect, Fragment, useRef, useCallback } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -76,6 +76,86 @@ export default function ReportDetailsPage() {
         contentRef: printRef,
         documentTitle: `Report_${report?.patient?.firstName || 'Patient'}`,
     });
+
+    // Custom Print Modal State
+    const [showCustomPrint, setShowCustomPrint] = useState(false);
+    const customPrintRef = useRef<HTMLDivElement>(null);
+    const previewContainerRef = useRef<HTMLDivElement>(null);
+    const [previewScale, setPreviewScale] = useState(1);
+    const handleCustomPrint = useReactToPrint({
+        contentRef: customPrintRef,
+        documentTitle: `Report_${report?.patient?.firstName || 'Patient'}`,
+    });
+
+
+    const defaultSpacing = {
+        topMargin: 0,
+        headerMargin: printSettings?.headerMargin || 10,
+        contentPadding: 40,
+        patientInfoMargin: 20,
+        tableSpacing: 20,
+        signatureTopPadding: 40,
+        footerMargin: 0,
+    };
+
+    const [customSpacing, setCustomSpacing] = useState(defaultSpacing);
+    const [printOverrides, setPrintOverrides] = useState({
+        showLetterhead1: printSettings?.showLetterhead1 !== false,
+        showLetterhead2: printSettings?.showLetterhead2 !== false,
+        showWatermark: printSettings?.showWatermark ?? true,
+        watermarkText: printSettings?.watermarkText || 'Health Amaze Demo Account',
+    });
+
+    // Paper Size Options
+    const paperSizes: Record<string, { label: string; width: string; height: string }> = {
+        A4: { label: 'A4 (210 × 297 mm)', width: '210mm', height: '297mm' },
+        A5: { label: 'A5 (148 × 210 mm)', width: '148mm', height: '210mm' },
+        Letter: { label: 'Letter (8.5 × 11 in)', width: '216mm', height: '279mm' },
+        Legal: { label: 'Legal (8.5 × 14 in)', width: '216mm', height: '356mm' },
+    };
+    const [selectedPaperSize, setSelectedPaperSize] = useState('A4');
+
+    // Compute scale to fit preview in container
+    useEffect(() => {
+        if (!showCustomPrint) return;
+        const container = previewContainerRef.current;
+        if (!container) return;
+
+        const paperWidthPx: Record<string, number> = {
+            A4: 794,    // 210mm
+            A5: 559,    // 148mm
+            Letter: 816, // 216mm
+            Legal: 816,  // 216mm
+        };
+
+        const computeScale = () => {
+            const availableWidth = container.clientWidth - 60; // 30px padding each side
+            const paperPx = paperWidthPx[selectedPaperSize] || 794;
+            const scale = availableWidth < paperPx ? availableWidth / paperPx : 1;
+            setPreviewScale(scale);
+        };
+
+        computeScale();
+        const observer = new ResizeObserver(computeScale);
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [showCustomPrint, selectedPaperSize]);
+
+    // Sync overrides when printSettings load
+    useEffect(() => {
+        if (printSettings) {
+            setCustomSpacing(prev => ({
+                ...prev,
+                headerMargin: printSettings.headerMargin || 10,
+            }));
+            setPrintOverrides({
+                showLetterhead1: printSettings.showLetterhead1 !== false,
+                showLetterhead2: printSettings.showLetterhead2 !== false,
+                showWatermark: printSettings.showWatermark ?? true,
+                watermarkText: printSettings.watermarkText || 'Health Amaze Demo Account',
+            });
+        }
+    }, [printSettings]);
 
     // Status Options & Mapping
     const statusOptions = ['Initial', 'In Process', 'Completed', 'Verified & Signed', 'Printed', 'Delivered'];
@@ -314,6 +394,22 @@ export default function ReportDetailsPage() {
         setTempImpression(report?.impression || ''); // Reset to original
     };
 
+    const handleClearImpression = async () => {
+        if (!report) return;
+        try {
+            const data = await api.put(`/api/v1/reports/${report._id}`, { impression: '' });
+            if (data.status === 200) {
+                setReport(prev => prev ? ({ ...prev, impression: '' }) : null);
+                toast.success('Impression cleared');
+            } else {
+                toast.error('Failed to clear impression');
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Error clearing impression');
+        }
+    };
+
     const openImpressionInput = () => {
         setTempImpression(report?.impression || '');
         setShowImpressionInput(true);
@@ -330,10 +426,8 @@ export default function ReportDetailsPage() {
             
             if (!val) return null;
             
-            // "Name : range value"
-            // "Skip name if it is not there"
             return r.name ? `${r.name}: ${val}` : val;
-        }).filter(Boolean).join(', ');
+        }).filter(Boolean).join('<br/>');
     };
 
     const formatDate = (dateStr: string) => {
@@ -424,10 +518,10 @@ export default function ReportDetailsPage() {
                 </td>
                 
                 <td style={{padding: '15px 5px'}}>
-                    {!isDescriptive && (
-                        <div style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}>
-                            {displayRefRange}
-                        </div>
+                    {!isDescriptive && displayRefRange && (
+                        <div style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}
+                            dangerouslySetInnerHTML={{ __html: displayRefRange }}
+                        />
                     )}
                 </td>
                 
@@ -661,25 +755,48 @@ export default function ReportDetailsPage() {
                     )}
 
                     {!showImpressionInput ? (
-                        <button 
-                            onClick={openImpressionInput}
-                            style={{
-                                background: 'white',
-                                border: '1px dashed #3b82f6',
-                                color: '#3b82f6',
-                                padding: '10px',
-                                width: '100%',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                fontSize: '13px',
-                                transition: 'background 0.2s'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.background = '#eff6ff'}
-                            onMouseOut={(e) => e.currentTarget.style.background = 'white'}
-                        >
-                            {report.impression ? '+ EDIT IMPRESSION' : '+ ADD IMPRESSION'}
-                        </button>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button 
+                                onClick={openImpressionInput}
+                                style={{
+                                    background: 'white',
+                                    border: '1px dashed #3b82f6',
+                                    color: '#3b82f6',
+                                    padding: '10px',
+                                    flex: 1,
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                    fontSize: '13px',
+                                    transition: 'background 0.2s'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.background = '#eff6ff'}
+                                onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                            >
+                                {report.impression ? '+ EDIT IMPRESSION' : '+ ADD IMPRESSION'}
+                            </button>
+                            {report.impression && (
+                                <button 
+                                    onClick={handleClearImpression}
+                                    style={{
+                                        background: 'white',
+                                        border: '1px dashed #ef4444',
+                                        color: '#ef4444',
+                                        padding: '10px',
+                                        flex: 1,
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: 600,
+                                        fontSize: '13px',
+                                        transition: 'background 0.2s'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = '#fef2f2'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                                >
+                                    CLEAR IMPRESSION
+                                </button>
+                            )}
+                        </div>
                     ) : (
                         <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
                              <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#334155' }}>Add Impression</h4>
@@ -737,8 +854,8 @@ export default function ReportDetailsPage() {
                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
                     <button onClick={() => handlePrint()} style={actionBtnStyle('#1565c0')}>PRINT</button>
                     
-                    <button style={{ ...actionBtnStyle('#1565c0'), opacity: 0.6, cursor: 'not-allowed' }} disabled>
-                        CUSTOM PRINT <i className="fa fa-lock" style={{marginLeft: '5px'}}></i>
+                    <button onClick={() => setShowCustomPrint(true)} style={actionBtnStyle('#1565c0')}>
+                        CUSTOM PRINT
                     </button>
 
                     <Link href="/settings/report-print">
@@ -802,6 +919,186 @@ export default function ReportDetailsPage() {
              )}
 
              
+
+            {/* Custom Print Modal */}
+            {showCustomPrint && report && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', zIndex: 100, marginTop: '20px' }}>
+                    {/* Left Panel: Controls */}
+                    <div style={{ width: '320px', background: '#fff', height: '100vh', overflowY: 'auto', padding: '20px', borderRight: '2px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#1e293b' }}>Custom Print</h3>
+                            <button onClick={() => setShowCustomPrint(false)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#64748b' }}>×</button>
+                        </div>
+
+                        {/* Paper Size */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px' }}>Paper Size</h4>
+                            <div style={{ position: 'relative' }}>
+                                <select
+                                    value={selectedPaperSize}
+                                    onChange={(e) => setSelectedPaperSize(e.target.value)}
+                                    style={{ width: '100%', padding: '8px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: 'white', appearance: 'none', cursor: 'pointer' }}
+                                >
+                                    {Object.entries(paperSizes).map(([key, { label }]) => (
+                                        <option key={key} value={key}>{label}</option>
+                                    ))}
+                                </select>
+                                <span style={{ position: 'absolute', right: '10px', top: '8px', pointerEvents: 'none', color: '#64748b', fontSize: '12px' }}>▼</span>
+                            </div>
+                        </div>
+
+                        <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '5px 0 15px 0' }} />
+
+                        {/* Spacing Controls */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px' }}>Spacing</h4>
+                            {[
+                                { key: 'topMargin', label: 'Top Margin' },
+                                { key: 'headerMargin', label: 'Header Margin' },
+                                { key: 'contentPadding', label: 'Content Side Padding' },
+                                { key: 'patientInfoMargin', label: 'Patient Info Margin' },
+                                { key: 'tableSpacing', label: 'Table Spacing' },
+                                { key: 'signatureTopPadding', label: 'Signature Top Padding' },
+                                { key: 'footerMargin', label: 'Footer Margin' },
+                            ].map(({ key, label }) => (
+                                <div key={key} style={{ marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                        <label style={{ fontSize: '12px', color: '#475569' }}>{label}</label>
+                                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>{(customSpacing as any)[key]}px</span>
+                                    </div>
+                                    <input
+                                        type="range" min="0" max="100" step="1"
+                                        value={(customSpacing as any)[key]}
+                                        onChange={(e) => setCustomSpacing(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                                        style={{ width: '100%', accentColor: '#3b82f6' }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '5px 0 15px 0' }} />
+
+                        {/* Signatory Controls */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px' }}>Signatory</h4>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', cursor: 'pointer', fontSize: '13px', color: '#334155' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={printOverrides.showLetterhead1}
+                                    onChange={(e) => setPrintOverrides(prev => ({ ...prev, showLetterhead1: e.target.checked }))}
+                                    style={{ accentColor: '#3b82f6' }}
+                                />
+                                Show Signatory 1 ({printSettings?.letterhead1Name || 'Lab Technician'})
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#334155' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={printOverrides.showLetterhead2}
+                                    onChange={(e) => setPrintOverrides(prev => ({ ...prev, showLetterhead2: e.target.checked }))}
+                                    style={{ accentColor: '#3b82f6' }}
+                                />
+                                Show Signatory 2 ({printSettings?.letterhead2Name || 'Pathologist'})
+                            </label>
+                        </div>
+
+                        <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '5px 0 15px 0' }} />
+
+                        {/* Watermark Controls */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px' }}>Watermark</h4>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', cursor: 'pointer', fontSize: '13px', color: '#334155' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={printOverrides.showWatermark}
+                                    onChange={(e) => setPrintOverrides(prev => ({ ...prev, showWatermark: e.target.checked }))}
+                                    style={{ accentColor: '#3b82f6' }}
+                                />
+                                Show Watermark
+                            </label>
+                            {printOverrides.showWatermark && (
+                                <input
+                                    type="text"
+                                    value={printOverrides.watermarkText}
+                                    onChange={(e) => setPrintOverrides(prev => ({ ...prev, watermarkText: e.target.value }))}
+                                    placeholder="Watermark text"
+                                    style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                                />
+                            )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '15px' }}>
+                            <button
+                                onClick={() => handleCustomPrint()}
+                                style={{ width: '100%', padding: '12px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                            >
+                                🖨️ PRINT
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setCustomSpacing(defaultSpacing);
+                                    setPrintOverrides({
+                                        showLetterhead1: printSettings?.showLetterhead1 !== false,
+                                        showLetterhead2: printSettings?.showLetterhead2 !== false,
+                                        showWatermark: printSettings?.showWatermark ?? true,
+                                        watermarkText: printSettings?.watermarkText || 'Health Amaze Demo Account',
+                                    });
+                                }}
+                                style={{ width: '100%', padding: '10px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                            >
+                                RESET TO DEFAULTS
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Right Panel: Live Preview */}
+                    <div ref={previewContainerRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '30px', background: '#94a3b8', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                        <div className="custom-print-preview-wrapper" style={{ 
+                            width: paperSizes[selectedPaperSize].width, 
+                            minWidth: paperSizes[selectedPaperSize].width,
+                            flexShrink: 0,
+                            transform: `scale(${previewScale})`,
+                            transformOrigin: 'top center',
+                            transition: 'transform 0.2s',
+                            backgroundColor: 'white',
+                            boxShadow: '0 2px 16px rgba(0,0,0,0.2)',
+                            position: 'relative',
+                        }}>
+                            <style>{`
+                                .custom-print-preview-wrapper .report-print-container {
+                                    min-height: auto !important;
+                                }
+                                .custom-print-preview-wrapper::after {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0.8rem;
+                                    left: 0;
+                                    right: 0;
+                                    bottom: 0;
+                                    pointer-events: none;
+                                    z-index: 10;
+                                    background-image: repeating-linear-gradient(
+                                        to bottom,
+                                        transparent,
+                                        transparent calc(${paperSizes[selectedPaperSize].height} - 1px),
+                                        #ef4444 calc(${paperSizes[selectedPaperSize].height} - 1px),
+                                        #ef4444 ${paperSizes[selectedPaperSize].height}
+                                    );
+                                    background-size: 100% ${paperSizes[selectedPaperSize].height};
+                                }
+                            `}</style>
+                            <ReportPrint
+                                ref={customPrintRef}
+                                report={{...report, watermarkText: printOverrides.watermarkText}}
+                                printSettings={printSettings}
+                                customSpacing={customSpacing}
+                                overrides={printOverrides}
+                                paperSize={selectedPaperSize}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hidden Print Component */}
             <div style={{ display: 'none' }}>

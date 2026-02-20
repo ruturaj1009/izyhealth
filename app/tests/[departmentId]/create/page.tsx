@@ -83,11 +83,16 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
         if (price < 0) return toast.error('Price must be positive');
 
         if (testType === 'normal') {
-             for (const range of referenceRanges) {
+             for (let i = 0; i < referenceRanges.length; i++) {
+                 const range = referenceRanges[i];
                  const hasMin = range.min && range.min.trim();
                  const hasMax = range.max && range.max.trim();
                  if (!hasMin && !hasMax) {
                      return toast.error('Reference Ranges must have at least Min or Max value');
+                 }
+                 if (hasMin && hasMax && Number(range.max) <= Number(range.min)) {
+                     const label = range.name ? `"${range.name}"` : `#${i + 1}`;
+                     return toast.error(`Reference Range ${label}: Max value must be greater than Min value`);
                  }
              }
         }
