@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Test from '@/models/Test';
 import '@/models/Department'; // Register Department model for population
-import { authorize } from '@/lib/auth';
+import { authorize, hasPermission } from '@/lib/auth';
 
 export async function GET(
     req: NextRequest,
@@ -37,6 +37,11 @@ export async function PUT(
 
     try {
         const user = await authorize(req);
+
+        if (!hasPermission(user, 'test', 'update')) {
+            return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to update tests' }, { status: 403 });
+        }
+
         const body = await req.json();
 
         // Security: Remove orgid from body
@@ -89,6 +94,11 @@ export async function DELETE(
 
     try {
         const user = await authorize(req);
+
+        if (!hasPermission(user, 'test', 'delete')) {
+            return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to delete tests' }, { status: 403 });
+        }
+
         const test = await Test.findOneAndDelete({ _id: id, orgid: user.orgid });
         if (!test) {
             return NextResponse.json({ success: false, error: 'Test not found' }, { status: 404 });

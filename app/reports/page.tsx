@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 import { ReportStatus } from '@/enums/report';
 
 interface Report {
@@ -27,6 +28,7 @@ export default function ReportsPage() {
     const [searchVal, setSearchVal] = useState('');
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +39,7 @@ export default function ReportsPage() {
     const [selectedDate, setSelectedDate] = useState('');
 
     useEffect(() => {
+        setMounted(true);
         fetchReports(currentPage, selectedDate);
     }, [currentPage, selectedDate]); 
 

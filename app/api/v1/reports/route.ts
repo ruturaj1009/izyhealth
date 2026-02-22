@@ -3,13 +3,16 @@ import dbConnect from '@/lib/db';
 import Report from '@/models/Report';
 import { User } from '@/models/User';
 import { UserRole } from '@/types/user';
-import { authorize } from '@/lib/auth';
+import { authorize, hasPermission } from '@/lib/auth';
 
 export async function GET(request: Request) {
     await dbConnect();
 
     try {
         const user = await authorize(request);
+        if (!hasPermission(user, 'report', 'read')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to view reports' }, { status: 403 });
+        }
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');

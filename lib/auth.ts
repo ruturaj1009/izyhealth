@@ -68,11 +68,43 @@ export async function authorize(req: Request) {
         throw new Error('Unauthorized: Invalid token');
     }
 
-    // Check if user belongs to the requested Org
-    // Note: OrgID in header is string, tokens usually number. Compare safely.
     if (String(decoded.orgid) !== String(orgIdHeader)) {
         throw new Error('Forbidden: Access denied for this organization');
     }
 
+    // Performance optimization: If user is ADMIN, they have all permissions
+    if (decoded.role === 'ADMIN') {
+        return { ...decoded, permissions: null }; // Admin has bypass
+    }
+
+    // If STAFF, we might need to fetch permissions from DB or check if they are in the token
+    // For now, let's assume we want to be real-time and fetch if it's STAFF
+    if (decoded.role === 'STAFF' && decoded.userId) {
+        const { Auth } = await import('@/models/Auth');
+        const userAuth = await Auth.findById(decoded.userId).populate('staffRole');
+        if (userAuth?.staffRole) {
+            return {
+                ...decoded,
+                permissions: (userAuth.staffRole as any).permissions
+            };
+        }
+    }
+
     return decoded;
+}
+
+/**
+ * Helper to check if a user has specific permission
+ * @param user The authorized user object (from authorize function)
+ * @param entity Entity name (bill, report, patient, test, doctor)
+ * @param action Action name (create, read, update, delete)
+ */
+export function hasPermission(user: any, entity: string, action: string): boolean {
+    if (user.role === 'ADMIN') return true;
+    if (!user.permissions) return false;
+
+    const entityPerms = user.permissions[entity];
+    if (!entityPerms) return false;
+
+    return entityPerms[action] === true;
 }

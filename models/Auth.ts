@@ -2,7 +2,8 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export enum AuthRole {
     ADMIN = 'ADMIN',
-    USER = 'USER'
+    USER = 'USER',
+    STAFF = 'STAFF'
 }
 
 export interface IAuth extends Document {
@@ -15,6 +16,7 @@ export interface IAuth extends Document {
     isActive: boolean;
     orgid: number;
     role: AuthRole;
+    staffRole?: mongoose.Types.ObjectId; // Reference to StaffRole
     refreshToken?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -34,6 +36,10 @@ const AuthSchema: Schema<IAuth> = new Schema(
             type: String,
             enum: Object.values(AuthRole),
             default: AuthRole.ADMIN
+        },
+        staffRole: {
+            type: Schema.Types.ObjectId,
+            ref: 'StaffRole'
         },
         refreshToken: { type: String },
     },

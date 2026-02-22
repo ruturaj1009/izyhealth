@@ -5,13 +5,18 @@ import { User, Doctor } from '@/models/User';
 import { ApiResponse } from '@/types/api';
 import { UserRole } from '@/types/user';
 import { ReportStatus } from '@/enums/report';
-import { authorize } from '@/lib/auth';
+import { authorize, hasPermission } from '@/lib/auth';
 
 export async function POST(request: Request) {
     await dbConnect();
 
     try {
         const user = await authorize(request);
+
+        if (!hasPermission(user, 'bill', 'create')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to create bills' }, { status: 403 });
+        }
+
         const body = await request.json();
 
         let { patientId, doctorId, tests, paymentType, totalAmount, discountAmount, paidAmount, status } = body;
@@ -158,6 +163,11 @@ export async function GET(request: Request) {
 
     try {
         const user = await authorize(request);
+
+        if (!hasPermission(user, 'bill', 'read')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to view bills' }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');

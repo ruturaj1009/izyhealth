@@ -215,7 +215,7 @@ export const BillReceipt = React.forwardRef<HTMLDivElement, BillReceiptProps>(({
                             {bill.tests.map((item, index) => (
                                 <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
                                     <td style={{ padding: '8px 0', fontSize: '14px' }}>{index + 1}</td>
-                                    <td style={{ padding: '8px 0', fontSize: '14px' }}>{item.test.name}</td>
+                                    <td style={{ padding: '8px 0', fontSize: '14px' }}>{item.test?.name || 'Deleted Test'}</td>
                                     <td style={{ textAlign: 'right', padding: '8px 0', fontSize: '14px' }}>{item.price}</td>
                                 </tr>
                             ))}

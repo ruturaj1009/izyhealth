@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 import { Department } from '@/models/Department';
-import { authorize } from '@/lib/auth';
-
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/izyhealth';
-
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(MONGODB_URI);
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-    }
-};
+import { authorize, hasPermission } from '@/lib/auth';
+import dbConnect from '@/lib/db';
 
 export async function GET(req: Request) {
-    await connectDB();
+    await dbConnect();
     try {
         const user = await authorize(req);
+        if (!hasPermission(user, 'department', 'read')) {
+            return NextResponse.json({ success: false, error: 'Forbidden: Missing read permission' }, { status: 403 });
+        }
         const departments = await Department.find({ orgid: user.orgid })
             .select('name description icon createdAt')
             .sort({ createdAt: -1 });
@@ -29,9 +21,12 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: NextRequest) {
-    await connectDB();
+    await dbConnect();
     try {
         const user = await authorize(req);
+        if (!hasPermission(user, 'department', 'create')) {
+            return NextResponse.json({ success: false, error: 'Forbidden: Missing create permission' }, { status: 403 });
+        }
         const body = await req.json();
         const { name, description, icon } = body;
 

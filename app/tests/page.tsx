@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 import styles from './page.module.css';
 
 interface Department {
@@ -18,6 +19,7 @@ export default function TestsPage() {
     const [searchVal, setSearchVal] = useState('');
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
     
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -27,8 +29,54 @@ export default function TestsPage() {
     const [formIcon, setFormIcon] = useState(ICONS[0]);
     const [submitting, setSubmitting] = useState(false);
 
+    // Test Search State
+    const [testQuery, setTestQuery] = useState('');
+    const [testResults, setTestResults] = useState<any[]>([]);
+    const [testSearching, setTestSearching] = useState(false);
+    const [showTestResults, setShowTestResults] = useState(false);
+    const testSearchRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
+        setMounted(true);
         fetchDepartments();
+    }, []);
+
+    // Debounced Test Search
+    useEffect(() => {
+        if (!testQuery.trim()) {
+            setTestResults([]);
+            setShowTestResults(false);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setTestSearching(true);
+            try {
+                const data = await api.get(`/api/v1/tests/search?query=${testQuery.trim()}`);
+                if (data.success) {
+                    setTestResults(data.data);
+                    setShowTestResults(true);
+                }
+            } catch (error) {
+                console.error('Test search failed', error);
+            } finally {
+                setTestSearching(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [testQuery]);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (testSearchRef.current && !testSearchRef.current.contains(event.target as Node)) {
+                setShowTestResults(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
     }, []);
 
     const fetchDepartments = async () => {
@@ -43,7 +91,7 @@ export default function TestsPage() {
             setLoading(false);
         }
     };
-
+    
     const openCreateModal = () => {
         setIsEditing(false);
         setCurrentId(null);
@@ -175,32 +223,74 @@ export default function TestsPage() {
                     <div className={styles.headerTitle}>All Departments</div>
                     
                     <div className={styles.actions}>
+                        {/* Test Search */}
+                        <div className={styles.testSearchWrapper} ref={testSearchRef}>
+                            <input 
+                                type="text" 
+                                placeholder="Search tests by name, code or ID..." 
+                                value={testQuery}
+                                onChange={(e) => setTestQuery(e.target.value)}
+                                onFocus={() => testQuery.trim() && setShowTestResults(true)}
+                            />
+                            {testSearching && (
+                                <div style={{ position: 'absolute', right: '12px', top: '10px', color: '#64748b' }}>
+                                    <i className="fa fa-spinner fa-spin"></i>
+                                </div>
+                            )}
+
+                            {showTestResults && (
+                                <div className={styles.testSearchResults}>
+                                    {testResults.length === 0 ? (
+                                        <div className={styles.noTestResults}>No tests found for "{testQuery}"</div>
+                                    ) : (
+                                        testResults.map((test) => (
+                                            <Link href={test.url} key={test.id} className={styles.testResultItem}>
+                                                <div className={styles.testResultIcon}>
+                                                    <i className="fa fa-microscope"></i>
+                                                </div>
+                                                <div className={styles.testResultInfo}>
+                                                    <span className={styles.testResultName}>{test.name}</span>
+                                                    <div className={styles.testResultMeta}>
+                                                        {test.shortCode && <span>Code: <b>{test.shortCode}</b></span>}
+                                                        <span>ID: <b>#{test.shortId}</b></span>
+                                                        <span>₹{test.price}</span>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         <div className={styles.searchBox}>
                             <input 
                                 type="text" 
-                                placeholder="Search departments..." 
+                                placeholder="Filter departments..." 
                                 value={searchVal}
                                 onChange={(e) => setSearchVal(e.target.value)}
                             />
                         </div>
 
-                        <button 
-                            onClick={openCreateModal}
-                            style={{
-                                padding: '10px 16px',
-                                background: '#3f51b5',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                boxShadow: '0 4px 6px rgba(63, 81, 181, 0.2)',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            + Add Department
-                        </button>
+                        {mounted && checkPermission('test', 'create') && (
+                            <button 
+                                onClick={openCreateModal}
+                                style={{
+                                    padding: '10px 16px',
+                                    background: '#3f51b5',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    boxShadow: '0 4px 6px rgba(63, 81, 181, 0.2)',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                + Add Department
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -236,44 +326,48 @@ export default function TestsPage() {
                                     </span>
                                     
                                     <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                                        <button 
-                                            onClick={(e) => openEditModal(d, e)}
-                                            style={{
-                                                background: '#eff6ff',
-                                                color: '#3b82f6',
-                                                border: '1px solid #dbeafe',
-                                                borderRadius: '6px',
-                                                width: '30px',
-                                                height: '30px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '14px'
-                                            }}
-                                            title="Edit"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button 
-                                            onClick={(e) => handleDelete(d._id, e)}
-                                            style={{
-                                                background: '#fff1f2',
-                                                color: '#f43f5e',
-                                                border: '1px solid #ffe4e6',
-                                                borderRadius: '6px',
-                                                width: '30px',
-                                                height: '30px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '16px'
-                                            }}
-                                            title="Delete"
-                                        >
-                                            ×
-                                        </button>
+                                        {mounted && checkPermission('test', 'update') && (
+                                            <button 
+                                                onClick={(e) => openEditModal(d, e)}
+                                                style={{
+                                                    background: '#eff6ff',
+                                                    color: '#3b82f6',
+                                                    border: '1px solid #dbeafe',
+                                                    borderRadius: '6px',
+                                                    width: '30px',
+                                                    height: '30px',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '14px'
+                                                }}
+                                                title="Edit"
+                                            >
+                                                ✏️
+                                            </button>
+                                        )}
+                                        {mounted && checkPermission('test', 'delete') && (
+                                            <button 
+                                                onClick={(e) => handleDelete(d._id, e)}
+                                                style={{
+                                                    background: '#fff1f2',
+                                                    color: '#f43f5e',
+                                                    border: '1px solid #ffe4e6',
+                                                    borderRadius: '6px',
+                                                    width: '30px',
+                                                    height: '30px',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '16px'
+                                                }}
+                                                title="Delete"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </Link>

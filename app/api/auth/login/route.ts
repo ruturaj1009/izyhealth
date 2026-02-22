@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
         // Fetch Organization Details to get Lab Name
         const org = await Organization.findOne({ orgid: user.orgid });
-        const labName = org ? org.name : 'X Pharma';
+        const labName = org ? org.name : 'IzyHealth';
 
         // Generate access token (30m)
         const accessToken = signToken({
@@ -58,7 +58,10 @@ export async function POST(req: Request) {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                profileImage: user.profileImage
+                profileImage: user.profileImage,
+                role: user.role,
+                staffRoleName: user.role === 'STAFF' ? ((await user.populate('staffRole')).staffRole as any)?.name : null,
+                permissions: user.role === 'STAFF' ? ((await user.populate('staffRole')).staffRole as any)?.permissions : null
             },
             labName: labName // Return the actual lab name
         });

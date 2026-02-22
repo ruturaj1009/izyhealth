@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Test from '@/models/Test';
-import { authorize } from '@/lib/auth';
+import { authorize, hasPermission } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
     await dbConnect();
     try {
         const user = await authorize(req);
+
+        if (!hasPermission(user, 'test', 'create')) {
+            return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to create tests' }, { status: 403 });
+        }
 
         const body = await req.json();
 
@@ -47,6 +51,10 @@ export async function GET(req: NextRequest) {
     await dbConnect();
     try {
         const user = await authorize(req);
+
+        if (!hasPermission(user, 'test', 'read')) {
+            return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to view tests' }, { status: 403 });
+        }
 
         const { searchParams } = new URL(req.url);
         const type = searchParams.get('type');

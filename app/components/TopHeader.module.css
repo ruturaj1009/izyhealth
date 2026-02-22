@@ -155,6 +155,23 @@
     white-space: nowrap;
 }
 
+.roleBadgeContainer {
+    margin-top: 8px;
+}
+
+.roleBadge {
+    display: inline-block;
+    padding: 2px 10px;
+    background: #eef2ff;
+    color: #4f46e5;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border: 1px solid #e0e7ff;
+}
+
 .menuDivider {
     height: 1px;
     background: #f1f5f9;
@@ -183,5 +200,110 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.searchWrapper {
+    position: relative;
+}
+
+.searchResults {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    width: 400px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 12px 0;
+    z-index: 1001;
+    color: #1e293b;
+    animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #f1f5f9;
+}
+
+.resultSection {
+    margin-bottom: 8px;
+}
+
+.resultSection:last-child {
+    margin-bottom: 0;
+}
+
+.sectionHeader {
+    padding: 4px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.resultItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+}
+
+.resultItem:hover {
+    background: #f8fafc;
+}
+
+.resultIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+
+.billIcon {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.reportIcon {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.resultInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.resultTitle {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #0f172a;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resultMeta {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: block;
+}
+
+.shortId {
+    color: #6366f1;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.noResults {
+    padding: 16px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.875rem;
 }
 

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { User } from '@/models/User';
 import { ApiResponse } from '@/types/api';
-import { IUser } from '@/types/user';
-import { authorize } from '@/lib/auth';
+import { UserRole, IUser } from '@/types/user';
+import { authorize, hasPermission } from '@/lib/auth';
 
 export async function GET(
     request: Request,
@@ -41,6 +41,20 @@ export async function PUT(
         // Ensure not accidentally updating orgid
         delete body.orgid;
 
+        const targetUser = await User.findOne({ _id: id, orgid: currentUser.orgid });
+        if (!targetUser) {
+            const response: ApiResponse<null> = { status: 404, error: 'User not found' };
+            return NextResponse.json(response, { status: 404 });
+        }
+
+        // RBAC check based on role
+        if (targetUser.role === UserRole.PATIENT && !hasPermission(currentUser, 'patient', 'update')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to update patients' }, { status: 403 });
+        }
+        if (targetUser.role === UserRole.DOCTOR && !hasPermission(currentUser, 'doctor', 'update')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to update doctors' }, { status: 403 });
+        }
+
         const user = await User.findOneAndUpdate(
             { _id: id, orgid: currentUser.orgid }, // Org Scope
             body,
@@ -67,6 +81,20 @@ export async function DELETE(
     try {
         const currentUser = await authorize(request);
         const { id } = await params;
+        const targetUser = await User.findOne({ _id: id, orgid: currentUser.orgid });
+        if (!targetUser) {
+            const response: ApiResponse<null> = { status: 404, error: 'User not found' };
+            return NextResponse.json(response, { status: 404 });
+        }
+
+        // RBAC check based on role
+        if (targetUser.role === UserRole.PATIENT && !hasPermission(currentUser, 'patient', 'delete')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to delete patients' }, { status: 403 });
+        }
+        if (targetUser.role === UserRole.DOCTOR && !hasPermission(currentUser, 'doctor', 'delete')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to delete doctors' }, { status: 403 });
+        }
+
         const user = await User.findOneAndDelete({ _id: id, orgid: currentUser.orgid }); // Org Scope
         if (!user) {
             const response: ApiResponse<null> = { status: 404, error: 'User not found' };

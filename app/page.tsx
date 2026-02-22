@@ -8,6 +8,7 @@ import { api } from '@/lib/api-client';
 
 export default function Home() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [statsData, setStatsData] = useState({
     totalBills: 0,
     totalPaymentReceived: 0,
@@ -27,6 +28,7 @@ export default function Home() {
       }
     }
     fetchStats();
+    setMounted(true);
   }, []);
 
   const stats = [
@@ -117,7 +119,7 @@ export default function Home() {
             <span className={styles.label}>Rate List</span>
         </Link>
 
-        <Link href="#" className={styles.card}>
+        <Link href="/analytics" className={styles.card}>
             <div className={`${styles.iconWrapper} ${styles.iconGreen}`}>
                 <i className="fa fa-chart-pie"></i>
             </div>
@@ -131,12 +133,14 @@ export default function Home() {
             <span className={styles.label}>Lab Settings</span>
         </button>
 
-        <Link href="#" className={styles.card}>
-            <div className={`${styles.iconWrapper} ${styles.iconRed}`}>
-                <i className="fa fa-user-shield"></i>
-            </div>
-            <span className={styles.label}>Administration</span>
-        </Link>
+        {mounted && localStorage.getItem('role') === 'ADMIN' && (
+            <Link href="/administration" className={styles.card}>
+                <div className={`${styles.iconWrapper} ${styles.iconRed}`}>
+                    <i className="fa fa-user-shield"></i>
+                </div>
+                <span className={styles.label}>Administration</span>
+            </Link>
+        )}
 
         <Link href="#" className={styles.card}>
             <div className={`${styles.iconWrapper} ${styles.iconOrange}`}>

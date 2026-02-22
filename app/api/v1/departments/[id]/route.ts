@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 import { Department } from '@/models/Department';
-import { authorize } from '@/lib/auth';
-
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/x-pharma';
-
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(MONGODB_URI);
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-    }
-};
+import { authorize, hasPermission } from '@/lib/auth';
+import dbConnect from '@/lib/db';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    await connectDB();
+    await dbConnect();
     try {
         const user = await authorize(req);
+        const method = req.method;
+        const requiredAction = method === 'PUT' ? 'update' : 'delete';
+        if (!hasPermission(user, 'department', requiredAction)) {
+            return NextResponse.json({ success: false, error: `Forbidden: Missing ${requiredAction} permission` }, { status: 403 });
+        }
         const { id } = await params;
         const body = await req.json();
         const { name, description, icon } = body;
@@ -44,9 +38,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    await connectDB();
+    await dbConnect();
     try {
         const user = await authorize(req);
+        const method = req.method;
+        const requiredAction = method === 'PUT' ? 'update' : 'delete';
+        if (!hasPermission(user, 'department', requiredAction)) {
+            return NextResponse.json({ success: false, error: `Forbidden: Missing ${requiredAction} permission` }, { status: 403 });
+        }
         const { id } = await params;
         const deletedDepartment = await Department.findOneAndDelete({ _id: id, orgid: user.orgid });
 
