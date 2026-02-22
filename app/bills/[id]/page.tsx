@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useReactToPrint } from 'react-to-print';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 import { BillReceipt } from '../../components/BillReceipt';
 import { BarcodeStickerSheet } from '../../components/BarcodeStickerSheet';
 import styles from './page.module.css';
@@ -74,6 +75,7 @@ export default function ViewBillPage() {
     const [submittingDue, setSubmittingDue] = useState(false);
     const [updatedLoading, setUpdatedLoading] = useState(false);
     const [printSettings, setPrintSettings] = useState<any>(null);
+    const [mounted, setMounted] = useState(false);
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
@@ -87,6 +89,7 @@ export default function ViewBillPage() {
     });
 
     useEffect(() => {
+        setMounted(true);
         if (params.id) {
             fetchBill(params.id as string);
             fetchPrintSettings();
@@ -249,7 +252,7 @@ export default function ViewBillPage() {
                                 <td>{index + 1}</td>
                                 <td>
                                     <i className="fa fa-file-lines" style={{color:'#f97316', marginRight:'8px'}}></i>
-                                    {item.test?.name}
+                                    {item.test?.name || 'Deleted Test'}
                                 </td>
                                 <td style={{textAlign:'right', fontWeight:600}}>{item.price}</td>
                             </tr>
@@ -267,37 +270,41 @@ export default function ViewBillPage() {
                              <button className={`${styles.btn} ${styles.btnBlue}`}>VIEW REPORT</button>
                         </Link>
                     ) : (
-                        <button 
-                            className={`${styles.btn} ${styles.btnBlue}`} 
-                            style={{background: '#db2777'}}
-                            onClick={async () => {
-                                if (updatedLoading) return; // Prevent double click
-                                setUpdatedLoading(true);
-                                try {
-                                    const res = await api.post('/api/v1/reports/create', { billId: bill._id });
-                                    if (res.status === 201 || res.status === 200) {
-                                         toast.success('Report created successfully');
-                                         fetchBill(bill._id); // Reload
-                                    } else {
-                                        toast.error('Failed to create report: ' + res.error);
+                        mounted && checkPermission('report', 'create') && (
+                            <button 
+                                className={`${styles.btn} ${styles.btnBlue}`} 
+                                style={{background: '#db2777'}}
+                                onClick={async () => {
+                                    if (updatedLoading) return; // Prevent double click
+                                    setUpdatedLoading(true);
+                                    try {
+                                        const res = await api.post('/api/v1/reports/create', { billId: bill._id });
+                                        if (res.status === 201 || res.status === 200) {
+                                             toast.success('Report created successfully');
+                                             fetchBill(bill._id); // Reload
+                                        } else {
+                                            toast.error('Failed to create report: ' + res.error);
+                                        }
+                                    } catch (e: any) {
+                                        toast.error(e?.message || 'Error creating report');
+                                    } finally {
+                                        setUpdatedLoading(false);
                                     }
-                                } catch (e: any) {
-                                    toast.error(e?.message || 'Error creating report');
-                                } finally {
-                                    setUpdatedLoading(false);
-                                }
-                            }}
-                            disabled={updatedLoading}
-                        >
-                            {updatedLoading ? 'CREATING...' : 'CREATE REPORT'}
-                        </button>
+                                }}
+                                disabled={updatedLoading}
+                            >
+                                {updatedLoading ? 'CREATING...' : 'CREATE REPORT'}
+                            </button>
+                        )
                     )}
 
-                    <Link href={`/bills/${bill._id}/add-test`} style={{display: 'contents'}}>
-                        <button className={`${styles.btn} ${styles.btnGreen}`} style={{background:'#f59e0b'}}>+ ADD TEST</button>
-                    </Link>
+                    {mounted && checkPermission('bill', 'update') && (
+                        <Link href={`/bills/${bill._id}/add-test`} style={{display: 'contents'}}>
+                            <button className={`${styles.btn} ${styles.btnGreen}`} style={{background:'#f59e0b'}}>+ ADD TEST</button>
+                        </Link>
+                    )}
 
-                    {bill.dueAmount > 0 && (
+                    {bill.dueAmount > 0 && mounted && checkPermission('bill', 'update') && (
                         <button 
                             onClick={() => {
                                 setCollectAmount(bill.dueAmount); 
@@ -310,9 +317,11 @@ export default function ViewBillPage() {
                         </button>
                     )}
 
-                    <Link href="/settings/bill-print" style={{display: 'contents'}}>
-                        <button className={`${styles.btn} ${styles.btnBlue}`}>PRINT SETTINGS</button>
-                    </Link>
+                    {mounted && localStorage.getItem('role') === 'ADMIN' && (
+                        <Link href="/settings/bill-print" style={{display: 'contents'}}>
+                            <button className={`${styles.btn} ${styles.btnBlue}`}>PRINT SETTINGS</button>
+                        </Link>
+                    )}
                     <button className={`${styles.btn} ${styles.btnGreen}`} disabled style={{opacity: 0.6, cursor: 'not-allowed'}}>
                         SEND WHATSAPP <i className="fa fa-lock" style={{marginLeft: '5px'}}></i>
                     </button>

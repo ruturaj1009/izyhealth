@@ -4,7 +4,7 @@ import { User } from '@/models/User';
 import { UserRole, IUser } from '@/types/user';
 import { ApiResponse } from '@/types/api';
 import { z } from 'zod';
-import { authorize } from '@/lib/auth';
+import { authorize, hasPermission } from '@/lib/auth';
 
 const userCreateSchema = z.object({
     title: z.string(),
@@ -31,6 +31,14 @@ export async function GET(request: Request) {
 
         const { searchParams } = new URL(request.url);
         const role = searchParams.get('role');
+
+        if (role === UserRole.PATIENT && !hasPermission(user, 'patient', 'read')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to view patients' }, { status: 403 });
+        }
+        if (role === UserRole.DOCTOR && !hasPermission(user, 'doctor', 'read')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to view doctors' }, { status: 403 });
+        }
+
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const skip = (page - 1) * limit;
@@ -98,6 +106,13 @@ export async function POST(request: Request) {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { role, ...rest } = result.data as any;
+
+        if (role === UserRole.PATIENT && !hasPermission(currentUser, 'patient', 'create')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to create patients' }, { status: 403 });
+        }
+        if (role === UserRole.DOCTOR && !hasPermission(currentUser, 'doctor', 'create')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to create doctors' }, { status: 403 });
+        }
 
         // Explicitly remove empty strings to avoid duplicate key errors
         if (result.data.email === '') delete result.data.email;

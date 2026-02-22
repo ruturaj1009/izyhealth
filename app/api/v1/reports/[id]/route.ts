@@ -6,7 +6,7 @@ import Bill from '@/models/Bill';
 import { User } from '@/models/User';
 import '@/models/Test'; // Register Test model for population
 import '@/models/Department'; // Register Department model for population
-import { authorize } from '@/lib/auth';
+import { authorize, hasPermission } from '@/lib/auth';
 
 // GET: Fetch Report Details
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -15,6 +15,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     try {
         const user = await authorize(request);
+        if (!hasPermission(user, 'report', 'read')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to view reports' }, { status: 403 });
+        }
         const report = await Report.findOne({ _id: id, orgid: user.orgid })
             .populate('patient', 'firstName lastName mobile age gender')
             .populate('doctor', 'firstName lastName title')
@@ -54,6 +57,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
     try {
         const user = await authorize(request);
+        if (!hasPermission(user, 'report', 'update')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to update reports' }, { status: 403 });
+        }
         const body = await request.json();
         const { status, results, patientId, doctorId, impression } = body;
 

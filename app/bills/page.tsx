@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 import styles from './page.module.css';
 
 interface Bill {
@@ -20,6 +21,7 @@ export default function BillsPage() {
     const [searchVal, setSearchVal] = useState('');
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -30,6 +32,7 @@ export default function BillsPage() {
     const [selectedDate, setSelectedDate] = useState('');
 
     useEffect(() => {
+        setMounted(true);
         fetchBills(currentPage, selectedDate);
     }, [currentPage, selectedDate]);
 
@@ -102,7 +105,9 @@ export default function BillsPage() {
                             onChange={(e) => setSearchVal(e.target.value)}
                             style={{ padding: '8px 15px', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }}
                         />
-                        <Link href="/bills/create" style={{ background: '#3b82f6', color: 'white', padding: '8px 20px', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>+ Create Bill</Link>
+                        {mounted && checkPermission('bill', 'create') && (
+                            <Link href="/bills/create" style={{ background: '#3b82f6', color: 'white', padding: '8px 20px', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>+ Create Bill</Link>
+                        )}
                     </div>
                 </div>
 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 
 interface ReferenceRange {
     name: string;
@@ -39,8 +40,10 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
 
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         fetchTest();
     }, [testId]);
 
@@ -231,7 +234,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     {test.type === 'group' && (
+                     {mounted && test.type === 'group' && checkPermission('test', 'create') && (
                         <button
                             onClick={() => router.push(`/tests/${departmentId}/create?groupId=${testId}`)}
                             style={{
@@ -250,44 +253,48 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                      )}
                      
                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button 
-                            onClick={() => router.push(`/tests/${departmentId}/${testId}/edit`)}
-                            style={{ 
-                                background: '#eff6ff', 
-                                color: '#3b82f6', 
-                                border: '1px solid #dbeafe', 
-                                borderRadius: '6px', 
-                                width: '35px', 
-                                height: '35px', 
-                                cursor: 'pointer', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
-                                fontSize: '16px' 
-                            }}
-                            title="Edit"
-                        >
-                            ✏️
-                        </button>
-                        <button 
-                            onClick={handleDelete}
-                            style={{ 
-                                background: '#fff1f2', 
-                                color: '#f43f5e', 
-                                border: '1px solid #ffe4e6', 
-                                borderRadius: '6px', 
-                                width: '35px', 
-                                height: '35px', 
-                                cursor: 'pointer', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
-                                fontSize: '18px' 
-                            }}
-                            title="Delete"
-                        >
-                            ×
-                        </button>
+                        {mounted && checkPermission('test', 'update') && (
+                            <button 
+                                onClick={() => router.push(`/tests/${departmentId}/${testId}/edit`)}
+                                style={{ 
+                                    background: '#eff6ff', 
+                                    color: '#3b82f6', 
+                                    border: '1px solid #dbeafe', 
+                                    borderRadius: '6px', 
+                                    width: '35px', 
+                                    height: '35px', 
+                                    cursor: 'pointer', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontSize: '16px' 
+                                }}
+                                title="Edit"
+                            >
+                                ✏️
+                            </button>
+                        )}
+                        {mounted && checkPermission('test', 'delete') && (
+                            <button 
+                                onClick={handleDelete}
+                                style={{ 
+                                    background: '#fff1f2', 
+                                    color: '#f43f5e', 
+                                    border: '1px solid #ffe4e6', 
+                                    borderRadius: '6px', 
+                                    width: '35px', 
+                                    height: '35px', 
+                                    cursor: 'pointer', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontSize: '18px' 
+                                }}
+                                title="Delete"
+                            >
+                                ×
+                            </button>
+                        )}
                      </div>
 
                     <div style={{ textAlign: 'right', marginLeft: '10px' }}>
@@ -343,79 +350,83 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                                            </td>
                                            <td style={{ padding: '16px', color: '#475569' }}>{sub.shortCode || '-'}</td>
                                            <td style={{ padding: '16px', fontWeight: 600, color: '#1e293b' }}>₹{sub.price}</td>
-                                           <td style={{ padding: '16px', textAlign: 'right' }}>
+                                            <td style={{ padding: '16px', textAlign: 'right' }}>
                                                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '8px' }}>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleReorder(idx, 'up'); }}
-                                                                disabled={idx === 0}
-                                                                style={{
-                                                                    border: 'none', background: 'none', cursor: idx === 0 ? 'default' : 'pointer',
-                                                                    padding: 0, fontSize: '10px', color: idx === 0 ? '#cbd5e1' : '#64748b', lineHeight: 1
-                                                                }}
-                                                                title="Move Up"
-                                                            >
-                                                                ▲
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleReorder(idx, 'down'); }}
-                                                                disabled={idx === (test.subTests?.length || 0) - 1}
-                                                                style={{
-                                                                    border: 'none', background: 'none', cursor: idx === (test.subTests?.length || 0) - 1 ? 'default' : 'pointer',
-                                                                    padding: 0, fontSize: '10px', color: idx === (test.subTests?.length || 0) - 1 ? '#cbd5e1' : '#64748b', lineHeight: 1
-                                                                }}
-                                                                title="Move Down"
-                                                            >
-                                                                ▼
-                                                            </button>
-                                                        </div>
+                                                        {mounted && checkPermission('test', 'update') && (
+                                                            <>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '8px' }}>
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleReorder(idx, 'up'); }}
+                                                                        disabled={idx === 0}
+                                                                        style={{
+                                                                            border: 'none', background: 'none', cursor: idx === 0 ? 'default' : 'pointer',
+                                                                            padding: 0, fontSize: '10px', color: idx === 0 ? '#cbd5e1' : '#64748b', lineHeight: 1
+                                                                        }}
+                                                                        title="Move Up"
+                                                                    >
+                                                                        ▲
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleReorder(idx, 'down'); }}
+                                                                        disabled={idx === (test.subTests?.length || 0) - 1}
+                                                                        style={{
+                                                                            border: 'none', background: 'none', cursor: idx === (test.subTests?.length || 0) - 1 ? 'default' : 'pointer',
+                                                                            padding: 0, fontSize: '10px', color: idx === (test.subTests?.length || 0) - 1 ? '#cbd5e1' : '#64748b', lineHeight: 1
+                                                                        }}
+                                                                        title="Move Down"
+                                                                    >
+                                                                        ▼
+                                                                    </button>
+                                                                </div>
 
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                router.push(`/tests/${departmentId}/${sub._id}/edit`);
-                                                            }}
-                                                            style={{ 
-                                                                background: '#eff6ff', 
-                                                                color: '#3b82f6', 
-                                                                border: '1px solid #dbeafe', 
-                                                                borderRadius: '6px', 
-                                                                width: '30px', 
-                                                                height: '30px', 
-                                                                cursor: 'pointer', 
-                                                                display: 'flex', 
-                                                                alignItems: 'center', 
-                                                                justifyContent: 'center', 
-                                                                fontSize: '14px' 
-                                                            }}
-                                                            title="Edit Subtest"
-                                                        >
-                                                            ✏️
-                                                        </button>
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleRemoveSubtest(sub._id);
-                                                            }}
-                                                            style={{ 
-                                                                background: '#fff1f2', 
-                                                                color: '#f43f5e', 
-                                                                border: '1px solid #ffe4e6', 
-                                                                borderRadius: '6px', 
-                                                                width: '30px', 
-                                                                height: '30px', 
-                                                                cursor: 'pointer', 
-                                                                display: 'flex', 
-                                                                alignItems: 'center', 
-                                                                justifyContent: 'center', 
-                                                                fontSize: '16px' 
-                                                            }}
-                                                            title="Remove from Group"
-                                                        >
-                                                            ×
-                                                        </button>
+                                                                <button 
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        router.push(`/tests/${departmentId}/${sub._id}/edit`);
+                                                                    }}
+                                                                    style={{ 
+                                                                        background: '#eff6ff', 
+                                                                        color: '#3b82f6', 
+                                                                        border: '1px solid #dbeafe', 
+                                                                        borderRadius: '6px', 
+                                                                        width: '30px', 
+                                                                        height: '30px', 
+                                                                        cursor: 'pointer', 
+                                                                        display: 'flex', 
+                                                                        alignItems: 'center', 
+                                                                        justifyContent: 'center', 
+                                                                        fontSize: '14px' 
+                                                                    }}
+                                                                    title="Edit Subtest"
+                                                                >
+                                                                    ✏️
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleRemoveSubtest(sub._id);
+                                                                    }}
+                                                                    style={{ 
+                                                                        background: '#fff1f2', 
+                                                                        color: '#f43f5e', 
+                                                                        border: '1px solid #ffe4e6', 
+                                                                        borderRadius: '6px', 
+                                                                        width: '30px', 
+                                                                        height: '30px', 
+                                                                        cursor: 'pointer', 
+                                                                        display: 'flex', 
+                                                                        alignItems: 'center', 
+                                                                        justifyContent: 'center', 
+                                                                        fontSize: '16px' 
+                                                                    }}
+                                                                    title="Remove from Group"
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
-                                           </td>
+                                            </td>
                                        </tr>
                                    ))}
                                </tbody>
@@ -423,12 +434,14 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                        ) : (
                            <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
                                <p style={{ marginBottom: '10px', fontSize: '16px' }}>No sub-tests in this group yet.</p>
-                               <button 
-                                    onClick={() => router.push(`/tests/${departmentId}/create?groupId=${testId}`)}
-                                    style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
-                               >
-                                   + Create New Subtest
-                               </button>
+                               {mounted && checkPermission('test', 'create') && (
+                                   <button 
+                                        onClick={() => router.push(`/tests/${departmentId}/create?groupId=${testId}`)}
+                                        style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+                                   >
+                                       + Create New Subtest
+                                   </button>
+                               )}
                            </div>
                        )}
                     </div>

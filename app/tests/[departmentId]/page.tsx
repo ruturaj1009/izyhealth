@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 
 interface Test {
     _id: string;
@@ -28,6 +29,11 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
     const [tests, setTests] = useState<Test[]>([]);
     const [department, setDepartment] = useState<Department | null>(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         if (departmentId) {
@@ -123,19 +129,21 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
                 <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#1e293b' }}>
                     {department ? `${department.name} Tests` : 'Department Tests'}
                 </h1>
-                <Link href={`/tests/${departmentId}/create`}>
-                    <button style={{ 
-                        padding: '10px 20px', 
-                        background: '#3f51b5', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '8px', 
-                        fontWeight: 600,
-                        cursor: 'pointer' 
-                    }}>
-                        + Add New Test
-                    </button>
-                </Link>
+                {mounted && checkPermission('test', 'create') && (
+                    <Link href={`/tests/${departmentId}/create`}>
+                        <button style={{ 
+                            padding: '10px 20px', 
+                            background: '#3f51b5', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '8px', 
+                            fontWeight: 600,
+                            cursor: 'pointer' 
+                        }}>
+                            + Add New Test
+                        </button>
+                    </Link>
+                )}
             </div>
 
             {loading ? (
@@ -184,47 +192,51 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
                                         <td style={{ padding: '16px', fontWeight: 600, color: '#1e293b' }}>₹{test.price}</td>
                                         <td style={{ padding: '16px', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        router.push(`/tests/${departmentId}/${test._id}/edit`);
-                                                    }}
-                                                    style={{ 
-                                                        background: '#eff6ff', 
-                                                        color: '#3b82f6', 
-                                                        border: '1px solid #dbeafe', 
-                                                        borderRadius: '6px', 
-                                                        width: '30px', 
-                                                        height: '30px', 
-                                                        cursor: 'pointer', 
-                                                        display: 'flex', 
-                                                        alignItems: 'center', 
-                                                        justifyContent: 'center', 
-                                                        fontSize: '14px' 
-                                                    }}
-                                                    title="Edit"
-                                                >
-                                                    ✏️
-                                                </button>
-                                                <button 
-                                                    onClick={(e) => handleDelete(e, test._id)}
-                                                    style={{ 
-                                                        background: '#fff1f2', 
-                                                        color: '#f43f5e', 
-                                                        border: '1px solid #ffe4e6', 
-                                                        borderRadius: '6px', 
-                                                        width: '30px', 
-                                                        height: '30px', 
-                                                        cursor: 'pointer', 
-                                                        display: 'flex', 
-                                                        alignItems: 'center', 
-                                                        justifyContent: 'center', 
-                                                        fontSize: '16px' 
-                                                    }}
-                                                    title="Delete"
-                                                >
-                                                    ×
-                                                </button>
+                                                {mounted && checkPermission('test', 'update') && (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/tests/${departmentId}/${test._id}/edit`);
+                                                        }}
+                                                        style={{ 
+                                                            background: '#eff6ff', 
+                                                            color: '#3b82f6', 
+                                                            border: '1px solid #dbeafe', 
+                                                            borderRadius: '6px', 
+                                                            width: '30px', 
+                                                            height: '30px', 
+                                                            cursor: 'pointer', 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            justifyContent: 'center', 
+                                                            fontSize: '14px' 
+                                                        }}
+                                                        title="Edit"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                )}
+                                                {mounted && checkPermission('test', 'delete') && (
+                                                    <button 
+                                                        onClick={(e) => handleDelete(e, test._id)}
+                                                        style={{ 
+                                                            background: '#fff1f2', 
+                                                            color: '#f43f5e', 
+                                                            border: '1px solid #ffe4e6', 
+                                                            borderRadius: '6px', 
+                                                            width: '30px', 
+                                                            height: '30px', 
+                                                            cursor: 'pointer', 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            justifyContent: 'center', 
+                                                            fontSize: '16px' 
+                                                        }}
+                                                        title="Delete"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

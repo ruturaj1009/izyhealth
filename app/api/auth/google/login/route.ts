@@ -94,7 +94,10 @@ export async function POST(req: Request) {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                profileImage: user.profileImage
+                profileImage: user.profileImage,
+                role: user.role,
+                staffRoleName: user.role === 'STAFF' ? ((await user.populate('staffRole')).staffRole as any)?.name : null,
+                permissions: user.role === 'STAFF' ? ((await user.populate('staffRole')).staffRole as any)?.permissions : null
             },
             labName
         });

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 import styles from './page.module.css';
 
 interface Patient {
@@ -18,6 +19,7 @@ export default function PatientsPage() {
     const [searchVal, setSearchVal] = useState('');
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
     
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -26,6 +28,7 @@ export default function PatientsPage() {
     const limit = 10;
 
     useEffect(() => {
+        setMounted(true);
         fetchPatients(currentPage);
     }, [currentPage]);
 
@@ -75,7 +78,9 @@ export default function PatientsPage() {
                             value={searchVal}
                             onChange={(e) => setSearchVal(e.target.value)}
                         />
-                        <Link href="/patients/create" className={styles.btn}>+ Add Patient</Link>
+                        {mounted && checkPermission('patient', 'create') && (
+                            <Link href="/patients/create" className={styles.btn}>+ Add Patient</Link>
+                        )}
                         <button className={`${styles.outline} ${styles.icon}`} onClick={() => alert('Download clicked')}>⬇</button>
                     </div>
                 </div>

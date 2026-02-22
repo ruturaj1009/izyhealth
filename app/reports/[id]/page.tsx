@@ -8,6 +8,7 @@ import { ReportPrint } from '@/app/components/ReportPrint';
 import { ReportStatus } from '@/enums/report';
 import RichTextEditor from '@/app/components/RichTextEditor';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 
 interface TestResult {
     testId: string | { 
@@ -50,6 +51,7 @@ export default function ReportDetailsPage() {
     const [report, setReport] = useState<Report | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [mounted, setMounted] = useState(false);
     
     // Track which rows are in edit mode by index (string key for nested)
     const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
@@ -169,8 +171,9 @@ export default function ReportDetailsPage() {
     };
 
     useEffect(() => {
+        setMounted(true);
         if (id) {
-            fetchReport(id);
+            fetchReport(id as string);
             fetchPrintSettings();
         }
     }, [id]);
@@ -572,40 +575,42 @@ export default function ReportDetailsPage() {
                                     </button>
                                 </>
                             ) : (
-                                <button 
-                                    onClick={() => toggleEdit(key)}
-                                    style={{
-                                        background: '#e2e8f0',
-                                        color: '#475569',
-                                        padding: '6px 10px',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        fontSize: '11px'
-                                    }}
-                                >
-                                    EDIT
-                                </button>
+                                    <button 
+                                        onClick={() => toggleEdit(key)}
+                                        style={{
+                                            background: '#e2e8f0',
+                                            color: '#475569',
+                                            padding: '6px 10px',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            fontSize: '11px',
+                                            display: (mounted && checkPermission('report', 'update')) ? 'inline-block' : 'none'
+                                        }}
+                                    >
+                                        EDIT
+                                    </button>
                             )
                         )}
 
                         {!isEditing && (
-                            <button 
-                                onClick={() => openInterpModal(key, testDef?.interpretation || '')}
-                                style={{
-                                    background: '#fff7ed', 
-                                    color: '#ea580c', 
-                                    padding: '6px 10px', 
-                                    border: '1px solid #ffedd5', 
-                                    borderRadius: '4px', 
-                                    fontWeight: 600, 
-                                    cursor: 'pointer', 
-                                    fontSize: '11px'
-                                }}
-                            >
-                                EDIT INTERP
-                            </button>
+                                <button 
+                                    onClick={() => openInterpModal(key, testDef?.interpretation || '')}
+                                    style={{
+                                        background: '#fff7ed', 
+                                        color: '#ea580c', 
+                                        padding: '6px 10px', 
+                                        border: '1px solid #ffedd5', 
+                                        borderRadius: '4px', 
+                                        fontWeight: 600, 
+                                        cursor: 'pointer', 
+                                        fontSize: '11px',
+                                        display: (mounted && checkPermission('report', 'update')) ? 'inline-block' : 'none'
+                                    }}
+                                >
+                                    EDIT INTERP
+                                </button>
                         )}
                     </div>
                 </td>
@@ -701,6 +706,7 @@ export default function ReportDetailsPage() {
                                     color: '#334155',
                                     cursor: 'pointer'
                                 }}
+                                disabled={!mounted || !checkPermission('report', 'update')}
                             >
                                 {statusOptions.map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
@@ -755,7 +761,7 @@ export default function ReportDetailsPage() {
                     )}
 
                     {!showImpressionInput ? (
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div style={{ display: (mounted && checkPermission('report', 'update')) ? 'flex' : 'none', gap: '10px' }}>
                             <button 
                                 onClick={openImpressionInput}
                                 style={{

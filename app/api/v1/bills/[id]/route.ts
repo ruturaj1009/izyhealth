@@ -5,7 +5,7 @@ import Bill from '@/models/Bill';
 import '@/models/User';
 import '@/models/Test';
 import { ApiResponse } from '@/types/api';
-import { authorize } from '@/lib/auth';
+import { authorize, hasPermission } from '@/lib/auth';
 
 export async function GET(
     request: Request,
@@ -21,6 +21,10 @@ export async function GET(
             .populate('patient')
             .populate('doctor')
             .populate('tests.test');
+
+        if (!hasPermission(user, 'bill', 'read')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to view bills' }, { status: 403 });
+        }
 
         if (!bill) {
             return NextResponse.json({ status: 404, error: 'Bill not found' }, { status: 404 });
@@ -59,6 +63,11 @@ export async function PUT(
 
     try {
         const user = await authorize(request);
+
+        if (!hasPermission(user, 'bill', 'update')) {
+            return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to update bills' }, { status: 403 });
+        }
+
         const body = await request.json();
         // Extract fields we allow updating
         // We expect: tests, totalAmount, discountAmount, paidAmount, dueAmount, paymentType, discountType, status

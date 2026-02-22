@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import { checkPermission } from '@/lib/permissions';
 import styles from './page.module.css';
 
 interface Doctor {
@@ -17,6 +18,7 @@ export default function DoctorsPage() {
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [searchVal, setSearchVal] = useState('');
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -25,6 +27,7 @@ export default function DoctorsPage() {
     const limit = 10;
 
     useEffect(() => {
+        setMounted(true);
         fetchDoctors(currentPage);
     }, [currentPage]);
 
@@ -71,7 +74,9 @@ export default function DoctorsPage() {
                             value={searchVal}
                             onChange={(e) => setSearchVal(e.target.value)}
                         />
-                        <Link href="/doctors/create" className={styles.btn} style={{ padding: '0 16px' }}>+ Add Doctor</Link>
+                        {mounted && checkPermission('doctor', 'create') && (
+                            <Link href="/doctors/create" className={styles.btn} style={{ padding: '0 16px' }}>+ Add Doctor</Link>
+                        )}
                     </div>
                 </div>
 

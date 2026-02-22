@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
@@ -13,6 +13,11 @@ interface Props {
 export default function Sidebar({ isOpen, onMouseEnter, onMouseLeave }: Props) {
     const pathname = usePathname();
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const toggleMenu = (key: string) => {
         setOpenMenus(prev => ({ ...prev, [key]: !prev[key] }));
@@ -70,6 +75,9 @@ export default function Sidebar({ isOpen, onMouseEnter, onMouseLeave }: Props) {
                     <div className={styles.navItemLeft}><i className={`fa fa-chart-column ${styles.navIcon}`}></i> Business Analysis</div>
                     <i className={`fa ${openMenus['business'] ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{fontSize:12}}></i>
                 </div>
+                <div className={`${styles.submenu} ${openMenus['business'] ? styles.open : ''}`}>
+                    <Link href="/analytics" className={styles.submenuItem}>Overview Dashboard</Link>
+                </div>
 
                 {/* Settings & Admin */}
                 <div className={styles.navItem}>
@@ -80,10 +88,11 @@ export default function Sidebar({ isOpen, onMouseEnter, onMouseLeave }: Props) {
                     <div className={styles.navItemLeft}><i className={`fa fa-gear ${styles.navIcon}`}></i> General Settings</div>
                     <i className="fa fa-chevron-down" style={{fontSize:12}}></i>
                 </div>
-                <div className={styles.navItem}>
-                    <div className={styles.navItemLeft}><i className={`fa fa-shield-halved ${styles.navIcon}`}></i> Admin</div>
-                    <i className="fa fa-chevron-down" style={{fontSize:12}}></i>
-                </div>
+                {mounted && localStorage.getItem('role') === 'ADMIN' && (
+                    <Link href="/administration" className={`${styles.navItem} ${isActive('/administration') ? styles.active : ''}`}>
+                        <div className={styles.navItemLeft}><i className={`fa fa-shield-halved ${styles.navIcon}`}></i> Administration</div>
+                    </Link>
+                )}
 
                 <div style={{marginTop:'auto'}}>
                    <div className={styles.navItem}>
