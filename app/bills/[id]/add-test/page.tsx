@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
 import { api } from '@/lib/api-client';
+import Preloader from '@/app/components/Preloader';
 
 interface Test {
     _id: string;
@@ -197,7 +198,8 @@ export default function AddTestPage() {
         }
     };
 
-    if (loading) return <div style={{padding:'40px', textAlign:'center'}}>Loading...</div>;
+    if (loading) return <Preloader fullPage text="Loading Bill Details..." />;
+
     if (!bill) return <div style={{padding:'40px', textAlign:'center'}}>Bill not found</div>;
 
     return (

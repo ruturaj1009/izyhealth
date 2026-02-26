@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { ReportPrint } from '@/app/components/ReportPrint';
+import Preloader from '@/app/components/Preloader';
 import Cropper, { Area, Point } from 'react-easy-crop';
 
 interface ImageCropperProps {
@@ -95,7 +96,7 @@ function ImageCropper({ image, onCropComplete, onCancel, initialAspect }: ImageC
             const croppedImage = await getCroppedImg(image, croppedAreaPixels, removeBackground, sensitivity);
             onCropComplete(croppedImage);
         } catch (e) {
-            console.error(e);
+// console.error(e);
             toast.error('Failed to crop image');
         }
     };
@@ -314,7 +315,7 @@ export default function ReportPrintSettingsPage() {
                 }));
             }
         } catch (err) {
-            console.error(err);
+// console.error(err);
             toast.error('Failed to load settings');
         } finally {
             setLoading(false);
@@ -332,7 +333,7 @@ export default function ReportPrintSettingsPage() {
                 }));
             }
         } catch (err) {
-            console.error(err);
+// console.error(err);
         }
     }
 
@@ -349,7 +350,7 @@ export default function ReportPrintSettingsPage() {
                 toast.error('Failed to save settings');
             }
         } catch (err) {
-            console.error(err);
+// console.error(err);
             toast.error('Failed to save settings');
         } finally {
             setSaving(false);
@@ -427,7 +428,7 @@ export default function ReportPrintSettingsPage() {
                 toast.error('Failed to upload image');
             }
         } catch (err) {
-            console.error(err);
+// console.error(err);
             toast.error('Failed to upload image');
         } finally {
             setUploading(false);
@@ -435,7 +436,7 @@ export default function ReportPrintSettingsPage() {
     }
 
     if (loading) {
-        return <div style={{ padding: '50px', textAlign: 'center' }}>Loading settings...</div>;
+        return <Preloader fullPage text="Loading Report Settings..." />;
     }
 
     return (

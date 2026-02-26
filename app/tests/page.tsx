@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import { checkPermission } from '@/lib/permissions';
 import styles from './page.module.css';
+import Preloader from '@/app/components/Preloader';
 
 interface Department {
     _id: string;
@@ -58,7 +59,7 @@ export default function TestsPage() {
                     setShowTestResults(true);
                 }
             } catch (error) {
-                console.error('Test search failed', error);
+// console.error('Test search failed', error);
             } finally {
                 setTestSearching(false);
             }
@@ -86,7 +87,7 @@ export default function TestsPage() {
                 setDepartments(data.data);
             }
         } catch (error) {
-            console.error('Failed to fetch departments', error);
+// console.error('Failed to fetch departments', error);
         } finally {
             setLoading(false);
         }
@@ -141,7 +142,7 @@ export default function TestsPage() {
                 toast.error(data.error || 'Failed to save department');
             }
         } catch (error: any) {
-            console.error('Failed to save department', error);
+// console.error('Failed to save department', error);
             const msg = error.message || 'An error occurred while saving';
             toast.error(msg);
         } finally {
@@ -183,7 +184,7 @@ export default function TestsPage() {
                                     toast.error(data.error || 'Failed to delete');
                                 }
                             } catch (error: any) {
-                                console.error('Failed to delete department', error);
+// console.error('Failed to delete department', error);
                                 toast.error(error.message || 'An error occurred while deleting');
                             }
                         }}
@@ -295,7 +296,7 @@ export default function TestsPage() {
                 </div>
 
                 {loading ? (
-                    <div>Loading...</div>
+                    <Preloader text="Loading Departments..." />
                 ) : (
                     <div className={styles.list}>
                         {filteredDepts.map((d) => (

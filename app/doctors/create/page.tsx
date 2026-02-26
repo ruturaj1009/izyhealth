@@ -62,7 +62,7 @@ export default function CreateDoctorPage() {
                 toast.error(data.error || 'Failed to create doctor');
             }
         } catch (err: any) {
-            console.error(err);
+            // console.error(err);
             toast.error(err.message || 'Failed to create doctor');
         }
     };

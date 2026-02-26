@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import styles from './profile.module.css';
+import Preloader from '@/app/components/Preloader';
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -32,7 +33,7 @@ export default function ProfilePage() {
                     email: userData.email || ''
                 });
             } catch (e) {
-                console.error('Failed to parse user data');
+// console.error('Failed to parse user data');
             }
         }
     }, []);
@@ -86,7 +87,7 @@ export default function ProfilePage() {
                 toast.error(result.error || 'Upload failed');
             }
         } catch (error) {
-            console.error('Upload error:', error);
+// console.error('Upload error:', error);
             toast.error('Failed to upload image');
         } finally {
             setLoading(false);
@@ -132,14 +133,15 @@ export default function ProfilePage() {
                 toast.error(result.error || 'Failed to update profile');
             }
         } catch (error) {
-            console.error('Update error:', error);
+// console.error('Update error:', error);
             toast.error('Something went wrong');
         } finally {
             setSaving(false);
         }
     };
 
-    if (!user) return <div className={styles.container}>Loading...</div>;
+    if (!user) return <Preloader fullPage text="Loading Profile..." />;
+
 
     const initials = `${formData.firstName?.charAt(0) || ''}${formData.lastName?.charAt(0) || ''}`.toUpperCase();
 

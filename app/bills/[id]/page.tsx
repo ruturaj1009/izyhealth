@@ -9,6 +9,7 @@ import { checkPermission } from '@/lib/permissions';
 import { BillReceipt } from '../../components/BillReceipt';
 import { BarcodeStickerSheet } from '../../components/BarcodeStickerSheet';
 import styles from './page.module.css';
+import Preloader from '@/app/components/Preloader';
 
 interface BillDetail {
     _id: string;
@@ -103,7 +104,7 @@ export default function ViewBillPage() {
                 setPrintSettings(data.data);
             }
         } catch (err) {
-            console.error('Failed to fetch print settings:', err);
+            // console.error('Failed to fetch print settings:', err);
         }
     }
 
@@ -114,7 +115,7 @@ export default function ViewBillPage() {
                 setBill(data.data);
             }
         } catch (err) {
-            console.error(err);
+            // console.error(err);
         } finally {
             setLoading(false);
         }
@@ -141,17 +142,17 @@ export default function ViewBillPage() {
                 setCollectAmount('');
                 // Success toast?
             } else {
-                console.error(data.error);
+                // console.error(data.error);
                 // Error toast?
             }
         } catch (error) {
-            console.error(error);
+            // console.error(error);
         } finally {
             setSubmittingDue(false);
         }
     };
 
-    if (loading) return <div style={{padding:'50px', textAlign:'center'}}>Loading Bill...</div>;
+    if (loading) return <Preloader fullPage text="Loading Bill..." />;
     if (!bill) return <div style={{padding:'50px', textAlign:'center'}}>Bill not found</div>;
 
     const formattedDate = new Date(bill.createdAt).toLocaleString('en-IN', {

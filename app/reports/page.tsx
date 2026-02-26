@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import { checkPermission } from '@/lib/permissions';
 import { ReportStatus } from '@/enums/report';
+import Preloader from '@/app/components/Preloader';
 
 interface Report {
     _id: string;
@@ -64,7 +65,7 @@ export default function ReportsPage() {
                 }
             }
         } catch (err) {
-            console.error(err);
+            // console.error(err);
         } finally {
             setLoading(false);
         }
@@ -170,7 +171,7 @@ export default function ReportsPage() {
 
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={7} style={{textAlign:'center', padding: '40px', color: '#64748b'}}>Loading reports...</td></tr>
+                                <tr><td colSpan={7} style={{padding: '0px'}}><Preloader text="Fetching Reports..." /></td></tr>
                             ) : reports.length === 0 ? (
                                 <tr><td colSpan={7} style={{textAlign:'center', padding: '40px', color: '#64748b'}}>No reports found</td></tr>
                             ) : (

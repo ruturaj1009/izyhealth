@@ -50,7 +50,7 @@ export default function TopHeader({ onMenuClick, onMenuHover }: Props) {
                     setShowSearchResults(true);
                 }
             } catch (error) {
-                console.error('Search failed:', error);
+// console.error('Search failed:', error);
             } finally {
                 setSearching(false);
             }
@@ -72,7 +72,7 @@ export default function TopHeader({ onMenuClick, onMenuHover }: Props) {
                 try {
                     setUser(JSON.parse(storedUser));
                 } catch (e) {
-                    console.error('Failed to parse user data');
+// console.error('Failed to parse user data');
                 }
             }
         };
@@ -116,7 +116,7 @@ export default function TopHeader({ onMenuClick, onMenuHover }: Props) {
             // Redirect
             router.push('/login');
         } catch (error) {
-            console.error('Logout failed', error);
+// console.error('Logout failed', error);
         }
     };
 

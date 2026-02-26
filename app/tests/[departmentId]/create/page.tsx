@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import RichTextEditor from '../../../components/RichTextEditor';
+import Preloader from '@/app/components/Preloader';
 
 interface Department {
     _id: string;
@@ -60,7 +61,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                 if(d) setDepartmentName(d.name);
             }
         } catch(e) {
-            console.error(e);
+// console.error(e);
         }
     }
 
@@ -134,7 +135,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
                 toast.error(data.error || 'Failed to create test');
             }
         } catch (error) {
-            console.error(error);
+// console.error(error);
             toast.error('Something went wrong');
         } finally {
             setSubmitting(false);
@@ -449,7 +450,7 @@ function CreateTestContent({ params }: { params: Promise<{ departmentId: string 
 
 export default function CreateTestPage({ params }: { params: Promise<{ departmentId: string }> }) {
     return (
-        <Suspense fallback={<div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>}>
+        <Suspense fallback={<Preloader fullPage text="Preparing Test Form..." />}>
             <CreateTestContent params={params} />
         </Suspense>
     );

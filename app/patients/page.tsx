@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import { checkPermission } from '@/lib/permissions';
 import styles from './page.module.css';
+import Preloader from '@/app/components/Preloader';
 
 interface Patient {
     _id?: string;
@@ -44,7 +45,7 @@ export default function PatientsPage() {
                 }
             }
         } catch (err) {
-            console.error(err);
+            // console.error(err);
         } finally {
             setLoading(false);
         }
@@ -100,7 +101,7 @@ export default function PatientsPage() {
 
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={6} style={{textAlign:'center', padding: '30px'}}>Loading patients...</td></tr>
+                                <tr><td colSpan={6} style={{padding: '0px'}}><Preloader text="Loading patients..." /></td></tr>
                             ) : filteredPatients.length === 0 ? (
                                 <tr><td colSpan={6} style={{textAlign:'center', padding: '30px'}}>No patients found</td></tr>
                             ) : (

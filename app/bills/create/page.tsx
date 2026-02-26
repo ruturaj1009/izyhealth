@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import styles from './page.module.css';
+import Preloader from '@/app/components/Preloader';
 
 interface PatientData {
     _id?: string;
@@ -82,7 +83,7 @@ export default function CreateBillPage() {
                     const data = await api.get(`/users?role=PATIENT&search=${patientSearch}`);
                     if (data.status === 200) setPatientResults(data.data);
                 } catch (e) {
-                    console.error(e);
+                    // console.error(e);
                 }
             } else {
                 setPatientResults([]);
@@ -99,7 +100,7 @@ export default function CreateBillPage() {
                     const data = await api.get(`/users?role=DOCTOR&search=${doctorSearch}`);
                     if (data.status === 200) setDoctorResults(data.data);
                 } catch (e) {
-                    console.error(e);
+                    // console.error(e);
                 }
             } else {
                 setDoctorResults([]);
@@ -116,7 +117,7 @@ export default function CreateBillPage() {
                     const data = await api.get(`/tests?search=${testSearch}`);
                     if (data.success) setAvailableTests(data.data);
                 } catch (e) {
-                    console.error(e);
+                    // console.error(e);
                 }
             } else if (testSearch.length === 0) {
                  setAvailableTests([]); 
@@ -230,7 +231,7 @@ export default function CreateBillPage() {
                 if (data.status === 201 && data.data?._id) {
                     patientId = data.data._id;
                 } else {
-                    console.error('Patient Creation Failed:', data);
+                    // console.error('Patient Creation Failed:', data);
                     throw new Error(data.error || 'Failed to create patient: Backend Error');
                 }
             }
@@ -289,7 +290,7 @@ export default function CreateBillPage() {
             }
 
         } catch (error: any) {
-            console.error(error);
+            // console.error(error);
             toast.error(error.message || 'Something went wrong');
         } finally {
             setLoading(false);
@@ -308,6 +309,7 @@ export default function CreateBillPage() {
             overflow: isFixedLayout ? 'hidden' : 'visible', 
             boxSizing: 'border-box' 
         }}>
+            {loading && <Preloader fullPage text="Generating Bill..." />}
             <div className={styles.mainCard} style={{ 
                 height: isFixedLayout ? '100%' : 'auto', 
                 display: 'flex', 
