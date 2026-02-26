@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api-client';
 import { checkPermission } from '@/lib/permissions';
 import styles from './page.module.css';
+import Preloader from '@/app/components/Preloader';
 
 interface Bill {
     _id: string;
@@ -51,7 +52,7 @@ export default function BillsPage() {
                 }
             }
         } catch (err) {
-            console.error(err);
+            // console.error(err);
         } finally {
             setLoading(false);
         }
@@ -127,7 +128,7 @@ export default function BillsPage() {
 
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={7} style={{textAlign:'center', padding: '30px', color: '#64748b'}}>Loading bills...</td></tr>
+                                <tr><td colSpan={7} style={{padding: '0px'}}><Preloader text="Loading bills..." /></td></tr>
                             ) : filteredBills.length === 0 ? (
                                 <tr><td colSpan={7} style={{textAlign:'center', padding: '30px', color: '#64748b'}}>No bills found</td></tr>
                             ) : (

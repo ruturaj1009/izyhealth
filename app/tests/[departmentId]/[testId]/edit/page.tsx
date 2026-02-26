@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import RichTextEditor from '../../../../components/RichTextEditor';
+import Preloader from '@/app/components/Preloader';
 
 interface Department {
     _id: string;
@@ -92,7 +93,7 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
             }
 
         } catch(e) {
-            console.error(e);
+// console.error(e);
             toast.error('Error loading data');
         } finally {
             setLoading(false);
@@ -158,14 +159,15 @@ export default function EditTestPage({ params }: { params: Promise<{ departmentI
                 toast.error(data.error || 'Failed to update test');
             }
         } catch (error) {
-            console.error(error);
+// console.error(error);
             toast.error('Something went wrong');
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) return <div style={{ padding: '30px' }}>Loading...</div>;
+    if (loading) return <Preloader fullPage text="Loading Test Editor..." />;
+
 
     return (
         <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'var(--font-geist-sans)' }}>

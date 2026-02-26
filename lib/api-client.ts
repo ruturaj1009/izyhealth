@@ -55,16 +55,22 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
             } else {
                 // Refresh failed - redirect to logic
                 if (typeof window !== 'undefined') {
-                    console.error("Token refresh failed with status:", refreshRes.status);
+                    // console.error("Token refresh failed with status:", refreshRes.status);
                     const errorData = await refreshRes.json().catch(() => ({}));
-                    console.error("Refresh error details:", errorData);
-                    // Optional: clear local storage
-                    // localStorage.removeItem('token');
-                    // window.location.href = '/login'; 
+                    // console.error("Refresh error details:", errorData);
+
+                    // Clear all local storage
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('orgid');
+                    localStorage.removeItem('role');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('labName');
+
+                    window.location.href = '/login';
                 }
             }
         } catch (error) {
-            console.error("Auto-refresh failed", error);
+            // console.error("Auto-refresh failed", error);
         }
     }
 
@@ -80,14 +86,14 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
         if (response.ok) return data;
 
         // If request failed and we got something else (like HTML), throw clear error
-        console.error(`API Error [${response.status}] at ${url}:`, data.substring(0, 100));
+        // console.error(`API Error [${response.status}] at ${url}:`, data.substring(0, 100));
         return {
             status: response.status,
             error: `Server returned non-JSON response (${response.status})`,
             details: data.substring(0, 100)
         };
     } catch (err) {
-        console.error(`Failed to parse JSON for ${url}:`, err);
+        // console.error(`Failed to parse JSON for ${url}:`, err);
         return {
             status: response.status,
             error: "Failed to parse server response",

@@ -9,6 +9,7 @@ import { ReportStatus } from '@/enums/report';
 import RichTextEditor from '@/app/components/RichTextEditor';
 import { api } from '@/lib/api-client';
 import { checkPermission } from '@/lib/permissions';
+import Preloader from '@/app/components/Preloader';
 
 interface TestResult {
     testId: string | { 
@@ -185,7 +186,7 @@ export default function ReportDetailsPage() {
                 setPrintSettings(data.data);
             }
         } catch (err) {
-            console.error('Failed to fetch print settings:', err);
+// console.error('Failed to fetch print settings:', err);
         }
     }
 
@@ -199,7 +200,7 @@ export default function ReportDetailsPage() {
                 toast.error('Failed to load report');
             }
         } catch (err) {
-            console.error(err);
+// console.error(err);
         } finally {
             setLoading(false);
         }
@@ -218,7 +219,7 @@ export default function ReportDetailsPage() {
                 toast.error('Failed to update status');
             }
         } catch (err) {
-            console.error(err);
+// console.error(err);
         } finally {
             setSaving(false);
         }
@@ -336,7 +337,7 @@ export default function ReportDetailsPage() {
                  toast.error('Failed to save');
             }
          } catch(err) {
-             console.error(err);
+// console.error(err);
          } finally {
              setSaving(false);
          }
@@ -387,7 +388,7 @@ export default function ReportDetailsPage() {
                  toast.error('Failed to save impression');
             }
         } catch (e) {
-            console.error(e);
+// console.error(e);
             toast.error('Error saving impression');
         }
     };
@@ -408,7 +409,7 @@ export default function ReportDetailsPage() {
                 toast.error('Failed to clear impression');
             }
         } catch (e) {
-            console.error(e);
+// console.error(e);
             toast.error('Error clearing impression');
         }
     };
@@ -618,7 +619,8 @@ export default function ReportDetailsPage() {
         );
     };
 
-    if (loading) return <div style={{padding:'40px', textAlign:'center'}}>Loading...</div>;
+    if (loading) return <Preloader fullPage text="Loading Lab Report..." />;
+
     if (!report) return <div style={{padding:'40px', textAlign:'center'}}>Report not found</div>;
 
     const actionBtnStyle = (bgColor: string) => ({

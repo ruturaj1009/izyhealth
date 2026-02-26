@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { checkPermission } from '@/lib/permissions';
+import Preloader from '@/app/components/Preloader';
 
 interface Test {
     _id: string;
@@ -56,7 +57,7 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
              }
 
         } catch (error) {
-            console.error('Failed to fetch data', error);
+// console.error('Failed to fetch data', error);
         } finally {
             setLoading(false);
         }
@@ -95,7 +96,7 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
                                     toast.error(data.error || 'Failed to delete');
                                 }
                             } catch(error) {
-                                console.error(error);
+// console.error(error);
                                 toast.error('Error deleting test');
                             }
                         }}
@@ -147,7 +148,7 @@ export default function DepartmentTestsPage({ params }: { params: Promise<{ depa
             </div>
 
             {loading ? (
-                <div>Loading...</div>
+                <Preloader text="Loading Tests..." />
             ) : (
                 <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

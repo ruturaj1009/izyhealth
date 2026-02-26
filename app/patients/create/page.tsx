@@ -57,7 +57,7 @@ export default function CreatePatientPage() {
                 toast.error(data.error || 'Failed to create patient');
             }
         } catch (err) {
-            console.error(err);
+            // console.error(err);
             toast.error('Failed to create patient');
         }
     };

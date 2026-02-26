@@ -24,7 +24,7 @@ export default function Home() {
           setStatsData(json.data);
         }
       } catch (err) {
-        console.error('Failed to fetch stats:', err);
+// console.error('Failed to fetch stats:', err);
       }
     }
     fetchStats();

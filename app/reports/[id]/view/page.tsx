@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useReactToPrint } from 'react-to-print';
 import { ReportPrint } from '@/app/components/ReportPrint';
 import { api } from '@/lib/api-client';
+import Preloader from '@/app/components/Preloader';
 
 interface TestResult {
     testId: string | { 
@@ -74,14 +75,14 @@ export default function PatientReportViewPage() {
                     data = JSON.parse(text);
                 }
             } catch (e) {
-                console.error('Failed to parse print settings JSON:', e);
+// console.error('Failed to parse print settings JSON:', e);
             }
             
             if (data.status === 200) {
                 setPrintSettings(data.data);
             }
         } catch (err) {
-            console.error('Failed to fetch print settings:', err);
+// console.error('Failed to fetch print settings:', err);
         }
     }
 
@@ -95,7 +96,7 @@ export default function PatientReportViewPage() {
                     data = JSON.parse(text);
                 }
             } catch (e) {
-                console.error('Failed to parse report JSON:', e);
+// console.error('Failed to parse report JSON:', e);
             }
 
             if (data.status === 200) {
@@ -105,18 +106,14 @@ export default function PatientReportViewPage() {
                 }
             }
         } catch (err) {
-            console.error(err);
+// console.error(err);
         } finally {
             setLoading(false);
         }
     }
 
     if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc' }}>
-                <div style={{ fontSize: '18px', color: '#64748b' }}>Loading report...</div>
-            </div>
-        );
+        return <Preloader fullPage text="Loading Patient Report..." />;
     }
 
     if (!report) {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api-client';
 import { checkPermission } from '@/lib/permissions';
+import Preloader from '@/app/components/Preloader';
 
 interface ReferenceRange {
     name: string;
@@ -54,7 +55,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                 setTest(data.data);
             }
         } catch (error) {
-            console.error(error);
+// console.error(error);
             toast.error('Failed to load test');
         } finally {
             setLoading(false);
@@ -82,7 +83,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
             await api.put(`/api/v1/tests/${testId}`, { subTests: newSubTests.map(t => t._id) });
             // Ideally we re-fetch or confirm success, but optimistic is fine for now
         } catch (error) {
-            console.error(error);
+// console.error(error);
             toast.error('Failed to save order');
             // Revert on error
             fetchTest(); 
@@ -125,7 +126,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                                     toast.error('Failed to remove test');
                                 }
                             } catch(error) {
-                                console.error(error);
+// console.error(error);
                                 toast.error('Error removing test');
                             }
                         }}
@@ -179,7 +180,7 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
                                     toast.error(data.error || 'Failed to delete');
                                 }
                             } catch(e) {
-                                console.error(e);
+// console.error(e);
                                 toast.error('Error deleting test');
                             }
                         }}
@@ -201,7 +202,8 @@ export default function ViewTestPage({ params }: { params: Promise<{ departmentI
         ), { duration: 5000 });
     };
 
-    if (loading) return <div style={{ padding: '30px' }}>Loading...</div>;
+    if (loading) return <Preloader fullPage text="Loading Test Details..." />;
+
     if (!test) return <div style={{ padding: '30px' }}>Test not found</div>;
 
 

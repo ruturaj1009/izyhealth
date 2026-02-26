@@ -41,6 +41,9 @@ async function dbConnect() {
     require('@/models/Bill');
     require('@/models/Report');
     require('@/models/Auth');
+    require('@/models/StaffRole');
+    require('@/models/Organization');
+    require('@/models/PrintSettings');
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
       return mongoose;

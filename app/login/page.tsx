@@ -31,7 +31,7 @@ export default function LoginPage() {
                     data = JSON.parse(text);
                 }
             } catch (e) {
-                console.error('Failed to parse Google login JSON:', e);
+                // console.error('Failed to parse Google login JSON:', e);
             }
 
             if (!res.ok) {
@@ -81,7 +81,7 @@ export default function LoginPage() {
                     data = JSON.parse(text);
                 }
             } catch (e) {
-                console.error('Failed to parse login JSON:', e);
+                // console.error('Failed to parse login JSON:', e);
             }
 
             if (!res.ok) {

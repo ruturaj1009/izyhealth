@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useReactToPrint } from 'react-to-print';
 import { BillReceipt } from '../../../components/BillReceipt';
+import Preloader from '@/app/components/Preloader';
 
 interface BillDetail {
     _id: string;
@@ -61,7 +62,7 @@ export default function PatientBillViewPage() {
                     data = JSON.parse(text);
                 }
             } catch (e) {
-                console.error('Failed to parse bill JSON:', e);
+                // console.error('Failed to parse bill JSON:', e);
             }
 
             if (data.status === 200) {
@@ -87,7 +88,7 @@ export default function PatientBillViewPage() {
                     data = JSON.parse(text);
                 }
             } catch (e) {
-                console.error('Failed to parse print settings JSON:', e);
+                // console.error('Failed to parse print settings JSON:', e);
             }
 
             if (data.status === 200) {
@@ -99,11 +100,7 @@ export default function PatientBillViewPage() {
     }
 
     if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc' }}>
-                <div style={{ fontSize: '18px', color: '#64748b' }}>Loading bill...</div>
-            </div>
-        );
+        return <Preloader fullPage text="Loading bill..." />;
     }
 
     if (!bill) {

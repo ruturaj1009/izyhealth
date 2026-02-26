@@ -41,7 +41,7 @@ export default function SignupPage() {
             toast.success('Google verification successful. Please complete your profile.');
 
         } catch (error) {
-            console.error('Google Decode Error', error);
+// console.error('Google Decode Error', error);
             toast.error('Failed to verify Google Token');
         }
     };
@@ -66,7 +66,7 @@ export default function SignupPage() {
                     data = JSON.parse(text);
                 }
             } catch (e) {
-                console.error('Failed to parse registration JSON:', e);
+// console.error('Failed to parse registration JSON:', e);
             }
 
             if (!res.ok) {
