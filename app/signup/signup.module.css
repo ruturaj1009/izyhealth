@@ -140,17 +140,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Start from top to prevent clipping */
+    justify-content: center;
     background: #ffffff;
-    padding: 3rem 2rem;
-    overflow-y: auto;
+    padding: 1.5rem 2rem;
+    overflow: hidden;
 }
 
 .card {
     width: 100%;
-    max-width: 440px;
-    padding: 1rem 0; /* Reduced padding since container handles it */
-    margin: auto 0; /* Center vertically if space allows */
+    max-width: 560px;
+    padding: 0;
     animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -160,16 +159,16 @@
 }
 
 .cardHeader {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem;
     text-align: left;
 }
 
 .title {
-    font-size: 2.25rem;
-    font-weight: 800;
+    font-size: 2rem;
+    font-weight: 700;
     color: #0f172a;
-    margin-bottom: 0.5rem;
-    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
 }
 
 .subtitle {
@@ -190,27 +189,33 @@
 .form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
 }
 
 .inputGroup {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.25rem;
 }
 
 .label {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: #475569;
 }
 
 .input {
     width: 100%;
-    padding: 0.875rem 1rem;
+    padding: 0.7rem 0.875rem;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-size: 0.925rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     background: #f9fafb;
     color: #0f172a;
@@ -229,16 +234,16 @@
 
 .button {
     width: 100%;
-    padding: 1rem;
+    padding: 0.75rem;
     border: none;
-    border-radius: 12px;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-size: 0.925rem;
     font-weight: 700;
     color: white;
     background: #0f172a;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -266,9 +271,9 @@
     display: flex;
     align-items: center;
     color: #94a3b8;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    margin: 1rem 0;
+    margin: 0.5rem 0;
     letter-spacing: 0.05em;
 }
 
@@ -286,9 +291,98 @@
 
 .footerNote {
     text-align: center;
-    margin-top: 1.5rem;
-    font-size: 0.875rem;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
     color: #64748b;
+}
+
+/* Password Toggle */
+.passwordWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.eyeBtn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #94a3b8;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.eyeBtn:hover {
+    color: #475569;
+}
+
+/* Phone Field */
+.phoneWrapper {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.countrySelect {
+    width: 90px;
+    flex-shrink: 0;
+    padding: 0.7rem 0.6rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    background: #f9fafb;
+    color: #0f172a;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 24px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.countrySelect:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.countrySelect:hover {
+    border-color: #cbd5e1;
+    background-color: #fff;
+}
+
+.phoneInput {
+    flex: 1;
+    padding: 0.7rem 0.875rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.925rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #f9fafb;
+    color: #0f172a;
+    letter-spacing: 0.05em;
+}
+
+.phoneInput:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+}
+
+.phoneInput:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 /* Responsive */
