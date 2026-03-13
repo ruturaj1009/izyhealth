@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import StaffRole from '@/models/StaffRole';
+import { Auth } from '@/models/Auth';
 import { authorize } from '@/lib/auth';
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -53,7 +54,14 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
             return NextResponse.json({ success: false, error: 'Role not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, message: 'Role deleted successfully' });
+        // Cascade: delete all staff members assigned to this role
+        const deleteResult = await Auth.deleteMany({ staffRole: id, orgid: user.orgid });
+
+        return NextResponse.json({ 
+            success: true, 
+            message: 'Role deleted successfully',
+            deletedStaffCount: deleteResult.deletedCount || 0
+        });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import styles from './page.module.css';
 import { toast } from 'react-hot-toast';
+import Preloader from '@/app/components/Preloader';
 
 interface Permission {
     create: boolean;
@@ -37,6 +38,7 @@ export default function AdministrationPage() {
     const [showStaffModal, setShowStaffModal] = useState(false);
     const [editingRole, setEditingRole] = useState<StaffRole | null>(null);
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     const initialRole = {
         name: '',
@@ -107,17 +109,44 @@ export default function AdministrationPage() {
         }
     };
 
-    const handleDeleteRole = async (id: string, name: string) => {
-        if (!confirm(`Are you sure you want to delete the role "${name}"?`)) return;
-        try {
-            const res = await api.delete(`/api/v1/admin/roles/${id}`);
-            if (res.success) {
-                toast.success('Role deleted');
-                fetchData();
-            }
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to delete role');
-        }
+    const handleDeleteRole = (id: string, name: string) => {
+        const associatedStaff = staff.filter(s => s.staffRole?._id === id);
+        const staffCount = associatedStaff.length;
+
+        toast((t) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontWeight: 600 }}>Are you sure you want to delete the role "{name}"?</div>
+                {staffCount > 0 && (
+                    <div style={{ fontSize: '13px', color: '#ef4444', fontWeight: 500, background: '#fef2f2', padding: '8px 10px', borderRadius: '6px', border: '1px solid #fee2e2' }}>
+                        ⚠️ {staffCount} staff member{staffCount > 1 ? 's' : ''} assigned to this role will also be deleted!
+                    </div>
+                )}
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{ padding: '6px 12px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
+                    >Cancel</button>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                const res = await api.delete(`/api/v1/admin/roles/${id}`);
+                                if (res.success) {
+                                    const deletedCount = res.deletedStaffCount || 0;
+                                    toast.success(deletedCount > 0 
+                                        ? `Role "${name}" deleted along with ${deletedCount} staff member${deletedCount > 1 ? 's' : ''}` 
+                                        : 'Role deleted');
+                                    fetchData();
+                                }
+                            } catch (err: any) {
+                                toast.error(err.message || 'Failed to delete role');
+                            }
+                        }}
+                        style={{ padding: '6px 12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
+                    >Delete</button>
+                </div>
+            </div>
+        ), { duration: 10000 });
     };
 
     const handleSaveStaff = async () => {
@@ -146,17 +175,33 @@ export default function AdministrationPage() {
         }
     };
 
-    const handleDeleteStaff = async (id: string, name: string) => {
-        if (!confirm(`Are you sure you want to delete staff member "${name}"?`)) return;
-        try {
-            const res = await api.delete(`/api/v1/admin/staff/${id}`);
-            if (res.success) {
-                toast.success('Staff member removed');
-                fetchData();
-            }
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to delete staff');
-        }
+    const handleDeleteStaff = (id: string, name: string) => {
+        toast((t) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontWeight: 600 }}>Are you sure you want to delete staff member "{name}"?</div>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{ padding: '6px 12px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
+                    >Cancel</button>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                const res = await api.delete(`/api/v1/admin/staff/${id}`);
+                                if (res.success) {
+                                    toast.success('Staff member removed');
+                                    fetchData();
+                                }
+                            } catch (err: any) {
+                                toast.error(err.message || 'Failed to delete staff');
+                            }
+                        }}
+                        style={{ padding: '6px 12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
+                    >Delete</button>
+                </div>
+            </div>
+        ), { duration: 5000 });
     };
 
     const toggleStaffStatus = async (s: Staff) => {
@@ -192,7 +237,7 @@ export default function AdministrationPage() {
         setShowStaffModal(true);
     };
 
-    if (loading && stats.totalStaff === 0) return <div className={styles.container}>Loading Admin Dashboard...</div>;
+    if (loading && stats.totalStaff === 0) return <Preloader fullPage text="Loading Admin Dashboard..." />;
 
     const entities = ['bill', 'report', 'patient', 'test', 'doctor', 'department'];
 
@@ -286,7 +331,7 @@ export default function AdministrationPage() {
                                         </span>
                                     </td>
                                     <td>
-                                        <div style={{ display: 'flex', gap: '8px', cursor: 'pointer' }} onClick={() => toggleStaffStatus(s)}>
+                                        <div style={{ display: 'flex', gap: '8px', cursor: s.role === 'ADMIN' ? 'not-allowed' : 'pointer', opacity: s.role === 'ADMIN' ? 0.7 : 1 }} onClick={() => { if (s.role !== 'ADMIN') toggleStaffStatus(s); }}>
                                             <span style={{ color: s.isActive ? '#10b981' : '#ef4444', fontSize: '0.8rem', fontWeight: 600 }}>
                                                 ● {s.isActive ? 'Active' : 'Inactive'}
                                             </span>
@@ -388,7 +433,12 @@ export default function AdministrationPage() {
                         </div>
                         <div className={styles.formGroup} style={{ marginTop: '16px' }}>
                             <label>{editingStaff ? 'New Password (leave blank to keep current)' : 'Default Password*'}</label>
-                            <input className={styles.input} type="password" value={newStaff.password} onChange={e => setNewStaff({...newStaff, password: e.target.value})} />
+                            <div className={styles.passwordWrapper}>
+                                <input className={styles.input} type={showPassword ? 'text' : 'password'} value={newStaff.password} onChange={e => setNewStaff({...newStaff, password: e.target.value})} style={{ width: '100%', paddingRight: '44px' }} />
+                                <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)} title={showPassword ? 'Hide password' : 'Show password'}>
+                                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                </button>
+                            </div>
                         </div>
                         <div className={styles.formGroup} style={{ marginTop: '16px' }}>
                             <label>Assign Role*</label>

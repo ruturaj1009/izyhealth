@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import styles from './page.module.css';
+import Preloader from '@/app/components/Preloader';
 
 interface AnalyticsData {
     revenue: {
@@ -58,7 +59,7 @@ export default function AnalyticsPage() {
     }, [range]);
 
     if (loading && !data) {
-        return <div className={styles.container}>Loading Amazing Insights...</div>;
+        return <Preloader fullPage text="Loading Amazing Insights..." />;
     }
 
     if (!data) {
