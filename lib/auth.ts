@@ -81,7 +81,7 @@ export async function authorize(req: Request) {
     // For now, let's assume we want to be real-time and fetch if it's STAFF
     if (decoded.role === 'STAFF' && decoded.userId) {
         const { Auth } = await import('@/models/Auth');
-        const userAuth = await Auth.findById(decoded.userId).populate('staffRole');
+        const userAuth = await Auth.findById(decoded.userId).populate('staffRole').lean();
         if (userAuth?.staffRole) {
             return {
                 ...decoded,

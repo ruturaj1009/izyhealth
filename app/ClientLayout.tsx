@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import Sidebar from "./components/Sidebar";
 import TopHeader from "./components/TopHeader";
 import OfflinePage from "./components/OfflinePage";
+import FloatingSupport from "./components/FloatingSupport";
 import { Toaster } from 'react-hot-toast';
 
 export default function ClientLayout({
@@ -41,14 +42,15 @@ export default function ClientLayout({
       <Toaster position="top-center" />
       <OfflinePage />
       
-      {/* Sidebar: Fixed overlay */}
+      {/* Sidebar with integrated backdrop */}
       <Sidebar 
         isOpen={sidebarOpen} 
         onMouseEnter={handleOpen}
         onMouseLeave={handleClose}
+        onClose={handleClose}
       />
 
-      {/* Main Content: Full width since sidebar is fixed overlay */}
+      {/* Main Content */}
       <div style={{flexGrow:1, display:'flex', flexDirection:'column', height:'100vh', overflowY:'auto', width:'100%'}}>
          <TopHeader 
             onMenuClick={handleToggle} 
@@ -60,20 +62,7 @@ export default function ClientLayout({
          </main>
       </div>
 
-      {/* Optional: Overlay if we want click-outside to close on mobile, 
-          but hover behavior usually implies no blocking overlay needed on desktop.
-          For mobile, we might want one.
-       */}
-      {sidebarOpen && (
-        <div 
-          style={{
-            position:'fixed', inset:0, background:'rgba(0,0,0,0.3)', zIndex:1000,
-            display: typeof window !== 'undefined' && window.innerWidth < 768 ? 'block' : 'none'
-          }}
-          onClick={handleClose}
-        ></div>
-      )}
-
+      <FloatingSupport />
     </div>
     </GoogleOAuthProvider>
   );

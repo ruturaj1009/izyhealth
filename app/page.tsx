@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Script from 'next/script';
+
 import SettingsModal from './components/SettingsModal';
 import styles from "./dashboard.module.css";
 import { api } from '@/lib/api-client';
@@ -42,7 +42,7 @@ export default function Home() {
     <>
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <h1>Izy Health Dashboard</h1>
+          <h1>Dashboard</h1>
           <p>Seamlessly managing your laboratory operations with precision.</p>
         </div>
       </section>
@@ -181,10 +181,7 @@ export default function Home() {
 
       <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
 
-      <Script 
-        src="https://www.noupe.com/embed/019c24e615be76c4aaa9459c86b9b02887b3.js" 
-        strategy="lazyOnload" 
-      />
+
     </>
   );
 }

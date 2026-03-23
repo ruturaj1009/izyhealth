@@ -31,22 +31,20 @@ export async function GET(request: Request) {
         }
 
         if (search) {
-            // Strategy: Find patients (Users) that match the search, then query by patient ID OR reportId
+            // Find matching patients first (needed before count+find)
             try {
                 const users = await User.find({
-                    orgid: user.orgid, // Scope user search to org
+                    orgid: user.orgid,
                     role: "PATIENT",
                     $or: [
                         { firstName: { $regex: search, $options: 'i' } },
                         { lastName: { $regex: search, $options: 'i' } },
                         { phone: { $regex: search, $options: 'i' } }
                     ]
-                }).select('_id');
+                }).select('_id').lean();
 
                 const userIds = users.map(u => u._id);
-
                 query.$or = [
-                    // { reportId: { $regex: search, $options: 'i' } }, // Legacy
                     { patient: { $in: userIds } }
                 ];
             } catch (err) {
@@ -54,14 +52,18 @@ export async function GET(request: Request) {
             }
         }
 
-        const total = await Report.countDocuments(query);
-        const reports = await Report.find(query)
-            .select('patient doctor date status')
-            .populate('patient', 'firstName lastName mobile age gender')
-            .populate('doctor', 'firstName lastName title')
-            .sort({ date: -1 })
-            .skip(skip)
-            .limit(limit);
+        // Run count and find in parallel for performance
+        const [total, reports] = await Promise.all([
+            Report.countDocuments(query),
+            Report.find(query)
+                .select('patient doctor date status')
+                .populate('patient', 'firstName lastName mobile age gender')
+                .populate('doctor', 'firstName lastName title')
+                .sort({ date: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean()
+        ]);
 
         return NextResponse.json({
             status: 200,

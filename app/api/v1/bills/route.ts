@@ -196,14 +196,18 @@ export async function GET(request: Request) {
             }
         }
 
-        const total = await Bill.countDocuments(query);
-        const bills = await Bill.find(query)
-            .select('patient doctor totalAmount dueAmount status createdAt')
-            .populate('patient', 'firstName lastName mobile')
-            .populate('doctor', 'firstName lastName')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
+        // Run count and find in parallel for performance
+        const [total, bills] = await Promise.all([
+            Bill.countDocuments(query),
+            Bill.find(query)
+                .select('patient doctor totalAmount dueAmount status createdAt')
+                .populate('patient', 'firstName lastName mobile')
+                .populate('doctor', 'firstName lastName')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean()
+        ]);
 
         return NextResponse.json({
             status: 200,

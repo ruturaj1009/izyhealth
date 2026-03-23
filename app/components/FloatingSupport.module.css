@@ -1,0 +1,201 @@
+.wrapper {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+/* ===== Floating Action Button ===== */
+.fab {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #3f51b5, #1a237e);
+    color: #fff;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(63, 81, 181, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible;
+}
+
+.fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 28px rgba(63, 81, 181, 0.55);
+}
+
+.fabOpen {
+    background: linear-gradient(135deg, #ef5350, #c62828);
+    box-shadow: 0 4px 20px rgba(239, 83, 80, 0.4);
+    transform: rotate(0deg);
+}
+
+.fabOpen:hover {
+    box-shadow: 0 6px 28px rgba(239, 83, 80, 0.55);
+}
+
+.fabIcon {
+    font-size: 22px;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fabOpen .fabIcon {
+    transform: rotate(90deg);
+}
+
+/* Pulse ring */
+.pulse {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(63, 81, 181, 0.4);
+    animation: pulseRing 2s ease-out infinite;
+    pointer-events: none;
+}
+
+.fabOpen .pulse {
+    display: none;
+}
+
+@keyframes pulseRing {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ===== Expandable Menu ===== */
+.menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menuOpen {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* ===== Menu Items ===== */
+.menuItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 10px 16px;
+    border-radius: 28px;
+    text-decoration: none;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.menuItem:hover {
+    transform: translateX(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* AI Item - styled as button */
+.aiItem {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.menuItem i {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* Ask AI */
+.menuItem:nth-child(1) i {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+/* WhatsApp */
+.menuItem:nth-child(2) i {
+    background: linear-gradient(135deg, #25d366, #128c7e);
+}
+
+/* Email */
+.menuItem:nth-child(3) i {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+/* Call */
+.menuItem:nth-child(4) i {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+/* Hide default Tawk.to minimized bubble — our custom button triggers it */
+:global(#tawk-bubble-container),
+:global(.tawk-min-container) {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Center the Tawk.to chat widget on screen */
+:global(.tawk-chat-panel),
+:global(iframe[title="chat widget"]) {
+    left: 50% !important;
+    right: auto !important;
+    bottom: 50% !important;
+    transform: translate(-50%, 50%) !important;
+}
+
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+    .wrapper {
+        bottom: 16px;
+        right: 16px;
+    }
+
+    .fab {
+        width: 46px;
+        height: 46px;
+    }
+
+    .fabIcon {
+        font-size: 19px;
+    }
+
+    .menuItem {
+        padding: 8px 14px;
+        font-size: 0.8rem;
+    }
+
+    .menuItem i {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}

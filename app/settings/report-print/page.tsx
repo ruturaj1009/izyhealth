@@ -152,7 +152,8 @@ function ImageCropper({ image, onCropComplete, onCancel, initialAspect }: ImageC
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: '#1e293b' }}>Aspect Ratio</label>
                         <div style={{ display: 'flex', gap: '8px' }}>
                             {[
-                                { label: 'Header (4:1)', value: 4/1 },
+                                { label: 'Header (5:1)', value: 5/1 },
+                                { label: 'Footer (10:1)', value: 10/1 },
                                 { label: 'Signature (3:2)', value: 3/2 },
                                 { label: 'Square (1:1)', value: 1/1 },
                                 { label: 'Free', value: undefined }
@@ -687,7 +688,7 @@ export default function ReportPrintSettingsPage() {
                     image={tempFileUrl} 
                     onCropComplete={onCropComplete} 
                     onCancel={() => setShowCropper(false)} 
-                    initialAspect={croppingType === 'header' || croppingType === 'footer' ? 4/1 : 3/2}
+                    initialAspect={croppingType === 'header' ? 5/1 : croppingType === 'footer' ? 10/1 : 3/2}
                 />
             )}
         </div>

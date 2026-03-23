@@ -11,11 +11,13 @@ interface ImageCropperProps {
     image: string;
     onCropComplete: (croppedImage: Blob) => void;
     onCancel: () => void;
+    initialAspect?: number;
 }
 
-function ImageCropper({ image, onCropComplete, onCancel }: ImageCropperProps) {
+function ImageCropper({ image, onCropComplete, onCancel, initialAspect }: ImageCropperProps) {
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
+    const [aspect, setAspect] = useState<number | undefined>(initialAspect);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
     const onCropChange = (crop: Point) => setCrop(crop);
@@ -105,7 +107,7 @@ function ImageCropper({ image, onCropComplete, onCancel }: ImageCropperProps) {
                     image={image}
                     crop={crop}
                     zoom={zoom}
-                    aspect={8 / 2} // Aspect ratio for header (approx wide)
+                    aspect={aspect}
                     onCropChange={onCropChange}
                     onCropComplete={onCropCompleteInternal}
                     onZoomChange={onZoomChange}
@@ -115,40 +117,72 @@ function ImageCropper({ image, onCropComplete, onCancel }: ImageCropperProps) {
             <div style={{ 
                 marginTop: '10px', 
                 display: 'flex', 
+                flexDirection: 'column',
                 gap: '12px', 
                 width: '100%', 
                 maxWidth: '800px',
-                justifyContent: 'center',
                 background: 'white',
-                padding: '15px',
+                padding: '20px',
                 borderRadius: '8px'
             }}>
-                <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#64748b' }}>Zoom: {zoom.toFixed(1)}x</label>
-                    <input
-                        type="range"
-                        value={zoom}
-                        min={1}
-                        max={3}
-                        step={0.1}
-                        aria-labelledby="Zoom"
-                        onChange={(e) => setZoom(Number(e.target.value))}
-                        style={{ width: '100%' }}
-                    />
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: '#1e293b' }}>Aspect Ratio</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            {[
+                                { label: 'Header (5:1)', value: 5/1 },
+                                { label: 'Footer (10:1)', value: 10/1 },
+                                { label: 'Square (1:1)', value: 1/1 },
+                                { label: 'Free', value: undefined }
+                            ].map((opt) => (
+                                <button
+                                    key={opt.label}
+                                    onClick={() => setAspect(opt.value)}
+                                    style={{
+                                        padding: '6px 12px',
+                                        fontSize: '12px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #cbd5e1',
+                                        background: aspect === opt.value ? '#3b82f6' : 'white',
+                                        color: aspect === opt.value ? 'white' : '#475569',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-                    <button
-                        onClick={onCancel}
-                        style={{ padding: '8px 20px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        style={{ padding: '8px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
-                    >
-                        Apply Crop
-                    </button>
+
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                    <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px', color: '#64748b' }}>Zoom: {zoom.toFixed(1)}x</label>
+                        <input
+                            type="range"
+                            value={zoom}
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            aria-labelledby="Zoom"
+                            onChange={(e) => setZoom(Number(e.target.value))}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                        <button
+                            onClick={onCancel}
+                            style={{ padding: '8px 20px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            style={{ padding: '8px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+                        >
+                            Apply Crop
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -701,6 +735,7 @@ export default function BillPrintSettingsPage() {
                     image={tempFileUrl} 
                     onCropComplete={onCropComplete} 
                     onCancel={() => setShowCropper(false)} 
+                    initialAspect={croppingType === 'header' ? 5/1 : 10/1}
                 />
             )}
         </div>
