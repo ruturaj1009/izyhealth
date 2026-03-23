@@ -67,7 +67,7 @@ export default function PatientsPage() {
     };
 
     return (
-        <div style={{ padding: '20px', background: 'linear-gradient(135deg,#e3f2fd,#f7fbff)', minHeight: 'calc(100vh - 52px)' }}>
+        <div className={styles.pageWrapper}>
             <div className={styles.box}>
                 <div className={styles.header}>
                     <h2>Patients</h2>

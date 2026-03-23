@@ -1,72 +1,124 @@
+/* ===== Backdrop Overlay ===== */
+.backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1099;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== Sidebar Panel ===== */
 .sidebar {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 260px;
+    width: 272px;
     background: #ffffff;
     height: 100vh;
-    border-right: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
-    padding: 15px 10px;
     overflow-y: auto;
-    transition: transform 0.3s ease;
+    overflow-x: hidden;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1100;
     transform: translateX(-100%);
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
 }
 
 .sidebar.open {
     transform: translateX(0);
 }
 
-/* Create Button */
-.createBtnWrapper {
-    margin-bottom: 20px;
-    padding: 0 5px;
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 3px;
 }
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 99px;
+}
+
+/* ===== Create Button ===== */
+.createBtnWrapper {
+    padding: 20px 16px 12px;
+}
+
 .createBtn {
     width: 100%;
-    background: #1565c0;
+    background: linear-gradient(135deg, hsl(225, 75%, 28%), hsl(217, 80%, 38%));
     color: #fff;
     border: none;
-    padding: 12px;
-    border-radius: 25px;
-    font-weight: 600;
+    padding: 13px 16px;
+    border-radius: 14px;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 10px rgba(21, 101, 192, 0.3);
-    transition: transform 0.2s;
-    font-size: 14px;
-}
-.createBtn:hover {
-    background: #0d47a1;
-    transform: translateY(-2px);
+    gap: 10px;
+    box-shadow: 0 4px 14px -2px rgba(30, 50, 130, 0.35);
+    transition: all 0.25s ease;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-transform: uppercase;
 }
 
-/* Navigation */
+.createBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -3px rgba(30, 50, 130, 0.45);
+    filter: brightness(1.08);
+}
+
+.createBtn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ===== Section Labels ===== */
+.sectionLabel {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 16px 20px 6px;
+}
+
+/* ===== Navigation ===== */
 .nav {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    flex: 1;
+    padding: 0 10px;
 }
 
 .navItem {
     display: flex;
     align-items: center;
-    padding: 10px 15px;
-    color: #444;
+    padding: 10px 14px;
+    color: #475569;
     text-decoration: none;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 12px;
+    font-size: 0.855rem;
     font-weight: 500;
-    transition: background 0.2s, color 0.2s;
+    transition: all 0.2s ease;
     cursor: pointer;
-    justify-content: space-between; /* For dropdown arrow */
+    justify-content: space-between;
+    margin: 1px 0;
+    position: relative;
 }
 
 .navItemLeft {
@@ -76,58 +128,126 @@
 }
 
 .navItem:hover {
-    background: #f0f7ff;
-    color: #1565c0;
+    background: #f1f5f9;
+    color: #1e40af;
 }
 
 .navItem.active {
-    background: #e3f2fd;
-    color: #1565c0;
+    background: linear-gradient(135deg, #eff6ff, #e0e7ff);
+    color: #1e40af;
     font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.12);
 }
 
+/* ===== Nav Icons ===== */
 .navIcon {
-    width: 20px;
+    width: 18px;
     text-align: center;
-    color: #777;
-}
-.navItem:hover .navIcon, .navItem.active .navIcon {
-    color: #1565c0;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    transition: color 0.2s;
 }
 
-/* Submenu */
+.navItem:hover .navIcon,
+.navItem.active .navIcon {
+    color: #4f46e5;
+}
+
+/* Chevron icon */
+.chevron {
+    font-size: 0.65rem !important;
+    color: #94a3b8;
+    transition: transform 0.25s ease, color 0.2s;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.navItem:hover .chevron {
+    color: #6366f1;
+}
+
+/* ===== Submenu ===== */
 .submenu {
-    padding-left: 20px;
-    display: none;
-    flex-direction: column;
-    gap: 2px;
-    margin-top: 2px;
-}
-.submenu.open {
+    padding-left: 12px;
+    max-height: 0;
+    overflow: hidden;
     display: flex;
-}
-.submenuItem {
-    padding: 8px 15px 8px 30px;
-    color: #666;
-    text-decoration: none;
-    font-size: 13px;
-    border-radius: 6px;
-}
-.submenuItem:hover {
-    color: #1565c0;
-    background: #fcfcfc;
+    flex-direction: column;
+    gap: 1px;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
+    opacity: 0;
 }
 
-/* Mobile Toggle Overlay (Optional structure) */
+.submenu.open {
+    max-height: 200px;
+    opacity: 1;
+}
+
+.submenuItem {
+    padding: 8px 14px 8px 32px;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.82rem;
+    border-radius: 10px;
+    transition: all 0.2s;
+    font-weight: 450;
+    position: relative;
+}
+
+.submenuItem::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    transition: background 0.2s;
+}
+
+.submenuItem:hover {
+    color: #4f46e5;
+    background: #f8fafc;
+}
+
+.submenuItem:hover::before {
+    background: #6366f1;
+}
+
+/* ===== Divider ===== */
+.divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 8px 16px;
+}
+
+/* ===== Bottom Section ===== */
+.bottomSection {
+    margin-top: auto;
+    padding: 4px 0 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Special colored icons */
+.iconRefer {
+    color: #f59e0b !important;
+}
+
+.iconHelp {
+    color: #ef4444 !important;
+}
+
+/* ===== Mobile Responsive ===== */
 @media (max-width: 768px) {
     .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        transform: translateX(-100%);
-    }
-    .sidebar.mobileOpen {
-        transform: translateX(0);
-        box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+        width: 280px;
+        border-right: none;
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
+        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.12);
     }
 }

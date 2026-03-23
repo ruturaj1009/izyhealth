@@ -184,30 +184,32 @@ export default function AnalyticsPage() {
             {/* Key Metrics */}
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
-                    <div className={`${styles.statIcon}`} style={{ background: '#eef2ff', color: '#6366f1' }}>💰</div>
-                    <span className={styles.statLabel}>Revenue ({range})</span>
-                    <h2 className={styles.statValue}>{formatCurrency(data.revenue.current)}</h2>
-                    <div className={`${styles.statTrend} ${growth >= 0 ? styles.trendUp : styles.trendDown}`}>
-                        {growth >= 0 ? '↑' : '↓'} {Math.abs(growth).toFixed(1)}% vs prev
+                    <div className={styles.statIcon} style={{ background: '#eef2ff', color: '#6366f1' }}>💰</div>
+                    <div className={styles.statCardContent}>
+                        <span className={styles.statLabel}>Revenue ({range})</span>
+                        <h2 className={styles.statValue}>{formatCurrency(data.revenue.current)}</h2>
+                        <div className={`${styles.statTrend} ${growth >= 0 ? styles.trendUp : styles.trendDown}`}>
+                            {growth >= 0 ? '↑' : '↓'} {Math.abs(growth).toFixed(1)}% vs prev
+                        </div>
                     </div>
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={`${styles.statIcon}`} style={{ background: '#ecfdf5', color: '#10b981' }}>🧾</div>
-                    <span className={styles.statLabel}>Total Bills</span>
-                    <h2 className={styles.statValue}>{data.volume.current}</h2>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>
-                        Prev: {data.volume.previous}
-                    </p>
+                    <div className={styles.statIcon} style={{ background: '#ecfdf5', color: '#10b981' }}>🧾</div>
+                    <div className={styles.statCardContent}>
+                        <span className={styles.statLabel}>Total Bills</span>
+                        <h2 className={styles.statValue}>{data.volume.current}</h2>
+                        <span className={styles.statSub}>Prev: {data.volume.previous}</span>
+                    </div>
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={`${styles.statIcon}`} style={{ background: '#fef2f2', color: '#ef4444' }}>👥</div>
-                    <span className={styles.statLabel}>Active Patients</span>
-                    <h2 className={styles.statValue}>{data.summary.totalPatients}</h2>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>
-                        Total in system
-                    </p>
+                    <div className={styles.statIcon} style={{ background: '#fef2f2', color: '#ef4444' }}>👥</div>
+                    <div className={styles.statCardContent}>
+                        <span className={styles.statLabel}>Active Patients</span>
+                        <h2 className={styles.statValue}>{data.summary.totalPatients}</h2>
+                        <span className={styles.statSub}>Total in system</span>
+                    </div>
                 </div>
             </div>
 
@@ -224,7 +226,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Top Performers Grid */}
-            <div className={styles.mainGrid} style={{ marginTop: '32px' }}>
+            <div className={styles.mainGrid} style={{ marginTop: '28px' }}>
                 {/* Top Doctors */}
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
@@ -244,20 +246,18 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
 
-                {/* Patient Stats Summary Card */}
-                <div className={styles.card} style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', color: '#fff' }}>
-                    <h3 className={styles.cardTitle} style={{ color: '#fff' }}>Quick Insights</h3>
-                    <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div>
-                            <span style={{ fontSize: '0.875rem', color: '#bfdbfe' }}>AVG BILL VALUE</span>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                {/* Quick Insights Card */}
+                <div className={`${styles.card} ${styles.insightsCard}`}>
+                    <h3 className={`${styles.cardTitle} ${styles.insightsTitle}`}>Quick Insights</h3>
+                    <div className={styles.insightsBody}>
+                        <div className={styles.insightMetric}>
+                            <span className={styles.insightMetricLabel}>AVG BILL VALUE</span>
+                            <div className={styles.insightMetricValue}>
                                 {formatCurrency(data.volume.current ? data.revenue.current / data.volume.current : 0)}
                             </div>
                         </div>
-                        <div style={{ padding: '16px', background: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}>
-                            <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                Your revenue is concentrated in top performing departments. Consider diversifying test offerings.
-                            </p>
+                        <div className={styles.insightTip}>
+                            <p>Your revenue is concentrated in top performing departments. Consider diversifying test offerings.</p>
                         </div>
                     </div>
                 </div>

@@ -417,14 +417,7 @@ export const ReportPrint = React.forwardRef<HTMLDivElement, ReportPrintProps>(({
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ textAlign: 'center', fontSize: '11px', color: '#666', marginTop: '10px' }}>
-                                        Page {currentPage} of {totalPages}
-                                    </div>
-                                    {isLastPage && (
-                                        <div style={{ textAlign: 'center', marginTop: '5px', fontSize: '11px', color: '#888', fontStyle: 'italic' }}>
-                                            ~ End of Report ~
-                                        </div>
-                                    )}
+
                                 </div>
                             </div>
                         </div>
