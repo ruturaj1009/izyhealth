@@ -1,3 +1,9 @@
+const API_BASE = '/api/v1';
+
+interface RequestOptions extends RequestInit {
+    headers?: Record<string, string>;
+}
+
 // Guard: prevent multiple simultaneous 401s from triggering multiple redirects
 let isRedirecting = false;
 
