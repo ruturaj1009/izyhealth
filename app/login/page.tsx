@@ -232,6 +232,11 @@ export default function LoginPage() {
                                         Forgot password?
                                     </button>
                                 </p>
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '15px', fontSize: '0.8rem' }}>
+                                    <Link href="/privacy-policy" className={styles.link}>Privacy Policy</Link>
+                                    <Link href="/terms-conditions" className={styles.link}>Terms & Conditions</Link>
+                                    <Link href="/about" className={styles.link}>About</Link>
+                                </div>
                             </div>
                         </form>
                     </div>

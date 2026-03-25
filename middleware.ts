@@ -15,6 +15,9 @@ export function middleware(request: NextRequest) {
     const isPublicRoute =
         pathname === '/login' ||
         pathname === '/signup' ||
+        pathname === '/privacy-policy' ||
+        pathname === '/terms-conditions' ||
+        pathname === '/about' ||
         pathname.startsWith('/api') ||
         pathname.startsWith('/_next') ||
         pathname === '/favicon.ico' ||
