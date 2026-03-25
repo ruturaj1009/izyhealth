@@ -17,27 +17,35 @@ export async function GET(
 
     try {
         const user = await authorize(request);
-        const bill = await Bill.findOne({ _id: id, orgid: user.orgid })
-            .populate('patient')
-            .populate('doctor')
-            .populate('tests.test');
 
         if (!hasPermission(user, 'bill', 'read')) {
             return NextResponse.json({ status: 403, error: 'Forbidden: You do not have permission to view bills' }, { status: 403 });
         }
 
+        const Report = (await import('@/models/Report')).default;
+
+        // Fetch bill and linked report in parallel
+        const [bill, report] = await Promise.all([
+            Bill.findOne({ _id: id, orgid: user.orgid })
+                .populate('patient')
+                .populate('doctor')
+                .populate('tests.test')
+                .lean(),
+            Report.findOne({ bill: id, orgid: user.orgid })
+                .select('status reportId _id')
+                .lean()
+        ]);
+
         if (!bill) {
             return NextResponse.json({ status: 404, error: 'Bill not found' }, { status: 404 });
         }
 
-        // Fetch associated report status
-        const Report = (await import('@/models/Report')).default;
-        const report = await Report.findOne({ bill: id, orgid: user.orgid }).select('status reportId _id');
-
-        const billData = bill.toObject();
-        billData.reportStatus = report ? report.status : 'INITIAL';
-        billData.reportId = report ? report.reportId : null;
-        billData.reportMongoId = report ? report._id : null;
+        const billData = {
+            ...bill,
+            reportStatus: report ? (report as any).status : 'INITIAL',
+            reportId: report ? (report as any).reportId : null,
+            reportMongoId: report ? (report as any)._id : null,
+        };
 
         return NextResponse.json({
             status: 200,
