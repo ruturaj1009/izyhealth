@@ -25,7 +25,7 @@ export default function ClientLayout({
   const handleToggle = () => setSidebarOpen(prev => !prev);
   
   const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/privacy-policy' || pathname === '/terms-conditions' || pathname === '/about';
 
   if (isAuthPage) {
       return (

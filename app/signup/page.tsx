@@ -313,6 +313,11 @@ export default function SignupPage() {
 
                             <div className={styles.footerNote}>
                                 <p><i className="fa fa-info-circle" style={{ marginRight: '6px', color: '#3b82f6' }}></i>Your account will be pending admin approval.</p>
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '15px', fontSize: '0.8rem' }}>
+                                    <Link href="/privacy-policy" className={styles.link}>Privacy Policy</Link>
+                                    <Link href="/terms-conditions" className={styles.link}>Terms & Conditions</Link>
+                                    <Link href="/about" className={styles.link}>About</Link>
+                                </div>
                             </div>
                         </form>
                     </div>
