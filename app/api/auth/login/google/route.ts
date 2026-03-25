@@ -26,9 +26,6 @@ export async function POST(req: Request) {
             payload = ticket.getPayload();
         } catch (error) {
             console.error('Google Verify Error:', error);
-            // Fallback for development/testing with dummy tokens if needed, 
-            // but strict verification is better. 
-            // For now, if verify fails, we return generic error.
             return NextResponse.json({ error: 'Invalid Google Token' }, { status: 401 });
         }
 
@@ -38,11 +35,9 @@ export async function POST(req: Request) {
 
         const email = payload.email;
 
-        // Check if user exists
         const user = await Auth.findOne({ email });
 
         if (!user) {
-            // User not found -> 404 (Prompt client to signup)
             return NextResponse.json({
                 error: 'Account not found. Please sign up first.',
                 needSignup: true,
@@ -54,24 +49,19 @@ export async function POST(req: Request) {
             }, { status: 404 });
         }
 
-        // User found
-        // If inactive -> 403
         if (!user.isActive) {
             return NextResponse.json({ error: 'Account is inactive. Please contact admin.' }, { status: 403 });
         }
 
-        // Update Google ID/Image if missing (link account)
         if (!user.googleId || !user.profileImage) {
             user.googleId = payload.sub;
             if (!user.profileImage && payload.picture) user.profileImage = payload.picture;
             await user.save();
         }
 
-        // Fetch Organization Details
         const org = await Organization.findOne({ orgid: user.orgid });
         const labName = org ? org.name : 'X Pharma';
 
-        // Generate tokens
         const accessToken = signToken({
             userId: user._id,
             orgid: user.orgid,
@@ -102,12 +92,11 @@ export async function POST(req: Request) {
             labName
         });
 
-        // Set Cookie
         response.cookies.set('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 24 * 7 // 7 days
+            maxAge: 60 * 60 * 24 * 7
         });
 
         return response;

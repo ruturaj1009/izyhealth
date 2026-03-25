@@ -25,32 +25,26 @@ export async function GET(request: Request) {
             createdAt: { $gte: startOfDay, $lte: endOfDay }
         };
 
-        // 1. Total Bills Today
-        const totalBills = await Bill.countDocuments(queryToday);
-
-        // 2. Total Payment Received Today
-        // Note: Summing paidAmount of bills created today. 
-        // In a real system, we might track individual payment records.
-        const paymentStats = await Bill.aggregate([
-            { $match: queryToday },
-            { $group: { _id: null, total: { $sum: "$paidAmount" } } }
+        // Run all 4 independent queries in parallel
+        const [totalBills, paymentStats, totalPatients, totalReportsDelivered] = await Promise.all([
+            Bill.countDocuments(queryToday),
+            Bill.aggregate([
+                { $match: queryToday },
+                { $group: { _id: null, total: { $sum: "$paidAmount" } } }
+            ]),
+            User.countDocuments({
+                orgid,
+                role: UserRole.PATIENT,
+                createdAt: { $gte: startOfDay, $lte: endOfDay }
+            }),
+            Report.countDocuments({
+                orgid,
+                status: ReportStatus.DELIVERED,
+                updatedAt: { $gte: startOfDay, $lte: endOfDay }
+            })
         ]);
+
         const totalPaymentReceived = paymentStats.length > 0 ? paymentStats[0].total : 0;
-
-        // 3. Total Patients Today
-        const totalPatients = await User.countDocuments({
-            orgid,
-            role: UserRole.PATIENT,
-            createdAt: { $gte: startOfDay, $lte: endOfDay }
-        });
-
-        // 4. Total Reports DELIVERED Today
-        // We check reports that were updated to DELIVERED status today.
-        const totalReportsDelivered = await Report.countDocuments({
-            orgid,
-            status: ReportStatus.DELIVERED,
-            updatedAt: { $gte: startOfDay, $lte: endOfDay }
-        });
 
         return NextResponse.json({
             status: 200,

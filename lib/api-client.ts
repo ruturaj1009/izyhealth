@@ -4,6 +4,20 @@ interface RequestOptions extends RequestInit {
     headers?: Record<string, string>;
 }
 
+// Guard: prevent multiple simultaneous 401s from triggering multiple redirects
+let isRedirecting = false;
+
+function clearSessionAndRedirect() {
+    if (isRedirecting) return;
+    isRedirecting = true;
+    localStorage.removeItem('token');
+    localStorage.removeItem('orgid');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user');
+    localStorage.removeItem('labName');
+    window.location.href = '/login';
+}
+
 async function apiRequest(endpoint: string, options: RequestOptions = {}) {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const orgid = typeof window !== 'undefined' ? localStorage.getItem('orgid') : null;
@@ -53,24 +67,16 @@ async function apiRequest(endpoint: string, options: RequestOptions = {}) {
                     });
                 }
             } else {
-                // Refresh failed - redirect to logic
+                // Refresh failed — clear session and redirect to login once
                 if (typeof window !== 'undefined') {
-                    // console.error("Token refresh failed with status:", refreshRes.status);
-                    const errorData = await refreshRes.json().catch(() => ({}));
-                    // console.error("Refresh error details:", errorData);
-
-                    // Clear all local storage
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('orgid');
-                    localStorage.removeItem('role');
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('labName');
-
-                    window.location.href = '/login';
+                    clearSessionAndRedirect();
                 }
             }
         } catch (error) {
-            // console.error("Auto-refresh failed", error);
+            // Network error during refresh — also redirect
+            if (typeof window !== 'undefined') {
+                clearSessionAndRedirect();
+            }
         }
     }
 
